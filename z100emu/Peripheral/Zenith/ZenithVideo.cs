@@ -93,25 +93,6 @@ namespace z100emu.Peripheral.Zenith
             if (SDL.SDL_LockTexture(_texture, IntPtr.Zero, out pixels, out pitch) != 0)
                 throw new InvalidOperationException();
 
-            /*uint* pixelPtr = (uint*) pixels.ToPointer();
-            for (var i = 0; i < VRAM_BANK_SIZE; i++)
-            {
-                var x = i & 0x7F;
-                var y = (i >> 7) & 0x1FF;
-
-                if (y >= 255)
-                    continue;
-
-                for (var bit = 0; bit < 8; bit++)
-                {
-                    var r = (((_red[i] >> bit) & 1) != 0) ? 0xFF : 0;
-                    var g = (((_green[i] >> bit) & 1) != 0) ? 0xFF : 0;
-                    var b = (((_blue[i] >> bit) & 1) != 0) ? 0xFF : 0;
-                    uint pix = (uint)((r << 24) + (g << 16) + (b << 8));
-                    pixelPtr[(y*REAL_WIDTH) + ((x*8) + (7 - bit))] = pix;
-                }
-            }*/
-
             uint* pixelPtr = (uint*) pixels.ToPointer();
             var realY = 0;
 
@@ -140,9 +121,9 @@ namespace z100emu.Peripheral.Zenith
 
                     for (var bit = 0; bit < 8; bit++)
                     {
-                        var r = (((_red[i] >> bit) & 1) != 0) ? 0xFF : 0;
-                        var g = (((_green[i] >> bit) & 1) != 0) ? 0xFF : 0;
-                        var b = (((_blue[i] >> bit) & 1) != 0) ? 0xFF : 0;
+                        var r = ((((_red[i] >> bit) & 1) != 0) && _redEnabled) || _flashEnabled ? 0xFF : 0;
+                        var g = ((((_green[i] >> bit) & 1) != 0) && _greenEnabled) || _flashEnabled ? 0xFF : 0;
+                        var b = ((((_blue[i] >> bit) & 1) != 0) && _blueEnabled) || _flashEnabled ? 0xFF : 0;
                         uint pix = (uint) ((r << 24) + (g << 16) + (b << 8));
                         pixelPtr[(realY*REAL_WIDTH) + ((x*8) + (7 - bit))] = pix;
                     }
@@ -270,6 +251,9 @@ namespace z100emu.Peripheral.Zenith
         {
             if (pos >= RED_START && pos < RED_START + VRAM_BANK_SIZE)
             {
+                if (!_vramEnabled)
+                    return true;
+
                 CopyRed(pos - RED_START, value, true);
                 CopyGreen(pos - RED_START, value);
                 CopyBlue(pos - RED_START, value);
@@ -277,6 +261,8 @@ namespace z100emu.Peripheral.Zenith
             }
             if (pos >= GREEN_START && pos < GREEN_START + VRAM_BANK_SIZE)
             {
+                if (!_vramEnabled)
+                    return true;
                 CopyRed(pos - GREEN_START, value);
                 CopyGreen(pos - GREEN_START, value, true);
                 CopyBlue(pos - GREEN_START, value);
@@ -284,6 +270,8 @@ namespace z100emu.Peripheral.Zenith
             }
             if (pos >= BLUE_START && pos < BLUE_START + VRAM_BANK_SIZE)
             {
+                if (!_vramEnabled)
+                    return true;
                 CopyRed(pos - BLUE_START, value);
                 CopyGreen(pos - BLUE_START, value);
                 CopyBlue(pos - BLUE_START, value, true);
