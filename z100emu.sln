@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "z100emu", "z100emu\z100emu.csproj", "{0644C564-F68E-4252-8B5B-2AA9C7DE3242}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "z100emu.GUI", "z100emu.GUI\z100emu.GUI.csproj", "{D4D3A092-A450-4A90-B15E-B87988FBC376}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FB5AE1A5-22A8-42C6-92F5-C366B171FAB2}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0644C564-F68E-4252-8B5B-2AA9C7DE3242}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0644C564-F68E-4252-8B5B-2AA9C7DE3242}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0644C564-F68E-4252-8B5B-2AA9C7DE3242}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0644C564-F68E-4252-8B5B-2AA9C7DE3242}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
