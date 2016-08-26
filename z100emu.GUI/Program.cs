@@ -23,6 +23,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using SDL2;
 using z100emu.Core;
@@ -37,6 +38,8 @@ namespace z100emu.GUI
     {
         private static void Main()
         {
+            Console.BufferHeight = 32766;
+            Console.WriteLine("z100emu");
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) != 0)
                 throw new InvalidOperationException();
@@ -59,8 +62,7 @@ namespace z100emu.GUI
 
                 ICpu cpu = new Cpu8086(ram, master8259);
 
-                var timer = new Intel8253();
-
+                var timer = new Intel8253(master8259);
                 cpu.AttachPortDevice(timer);
 
                 cpu.AttachPortDevice(master8259);
@@ -76,8 +78,13 @@ namespace z100emu.GUI
 
                 cpu.AttachPortDevice(new ZenithWinchester());
 
+                cpu.AttachPortDevice(new ZenithFloppy(master8259));
+
                 ram.MapBank(video);
                 cpu.AttachPortDevice(video);
+
+
+                var debug = false;
 
                 var quit = false;
                 while (!quit)
@@ -93,9 +100,9 @@ namespace z100emu.GUI
                     if (evt.type == SDL.SDL_EventType.SDL_QUIT)
                         quit = true;
 
+                    timer.Step();
                     video.Step();
-                    if (!cpu.ProcessSingleInstruction())
-                        quit = true;
+                    cpu.ProcessSingleInstruction(debug);
                 }
             }
 

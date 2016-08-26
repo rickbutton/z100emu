@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\IPortDevice.cs" />
+    <Compile Include="CPU\Clock.cs" />
     <Compile Include="CPU\EnumExtensions.cs" />
     <Compile Include="CPU\IInstructionFetcher.cs" />
     <Compile Include="CPU\OpCodeManager.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="Peripheral\Display\SDL.cs" />
     <Compile Include="Peripheral\Intel8253.cs" />
     <Compile Include="Peripheral\Intel8259.cs" />
+    <Compile Include="Peripheral\Zenith\ZenithFloppy.cs" />
     <Compile Include="Peripheral\Zenith\ZenithMemControl.cs" />
     <Compile Include="Peripheral\Zenith\ZenithVideo.cs" />
     <Compile Include="Peripheral\Zenith\Zenith8041a.cs" />

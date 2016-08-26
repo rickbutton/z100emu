@@ -1,71 +1,236 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.CodeDom;
+using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using z100emu.Core;
 
 namespace z100emu.Peripheral
 {
     public class Intel8253 : IPortDevice
     {
-
-        private const byte MODE_LATCHCOUNT = 0;
-        private const byte MODE_LOBYTE = 1;
-        private const byte MODE_HIBYTE = 2;
-        private const byte MODE_TOGGLE = 3;
-
-        private const byte USE_LO_BYTE = 0;
-        private const byte USE_HI_BYTE = 1;
-
-        private const long OSC_FREQUENCY = 1193182;
-
-        private ushort _channeldata;
-        private byte _accessmode;
-        private byte _bytetoggle;
-        private uint _effdata;
-        private double _chanfreq;
-        public bool Active { get; set; }
-
-        private ushort _counter;
-
-        private long _tick_gap;
-        private long _host_frequency;
-
-        public Intel8253()
+        public enum CounterMode
         {
-            _host_frequency = Stopwatch.Frequency;
-            Active = false;
+            Mode0, Mode1, Mode2, Mode3, Mode4, Mode5
+        }
+
+        public enum CounterReadLoad
+        {
+            Latch, LeastSig, MostSig, LeastMostSig,
+        }
+
+        public class Counter
+        {
+            public bool Active = false;
+
+            public ushort LatchedValue { get; set; }
+
+            public ushort LastWrittenValue { get; set; }
+            public ushort Value { get; set; }
+
+            public bool BCD { get; set; }
+            public CounterMode Mode  { get; set; }
+            public CounterReadLoad ReadLoad { get; set; }
+
+            public bool Output { get; set; } = false;
+
+            private bool _rlType = false;
+
+            public void SetClock(bool tick = true)
+            {
+                if (!Active)
+                    return;
+
+                if (Mode == CounterMode.Mode0)
+                {
+                    if (tick && Value >= 1) Value--;
+                    Output = Value == 0;
+                }
+                else if (Mode == CounterMode.Mode1)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (Mode == CounterMode.Mode2)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (Mode == CounterMode.Mode3)
+                {
+                    if (tick && Value >= 1) Value--;
+                    if (Value == 0) Value = LastWrittenValue;
+                    Output = Value > (LastWrittenValue/2);
+                }
+                else if (Mode == CounterMode.Mode4)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (Mode == CounterMode.Mode5)
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            public void Pulse()
+            {
+                SetClock();
+            }
+
+            public byte Read()
+            {
+                if (ReadLoad == CounterReadLoad.Latch)
+                {
+                    return (byte) LatchedValue;
+                }
+                else if (ReadLoad == CounterReadLoad.LeastSig)
+                {
+                    return (byte) Value;
+                }
+                else if (ReadLoad == CounterReadLoad.MostSig)
+                {
+                    return (byte) (Value >> 8);
+                }
+                else if (ReadLoad == CounterReadLoad.LeastMostSig)
+                {
+                    if (!_rlType)
+                    {
+                        _rlType = !_rlType;
+                        return (byte) Value;
+                    }
+                    else
+                    {
+                        _rlType = !_rlType;
+                        return (byte) (Value >> 8);
+                    }
+                }
+                throw new InvalidOperationException();
+            }
+
+            public void Write(byte value)
+            {
+                if (ReadLoad == CounterReadLoad.Latch)
+                {
+                    throw new InvalidOperationException(); 
+                }
+                else if (ReadLoad == CounterReadLoad.LeastSig)
+                {
+                    Value = (ushort) ((Value & 0xFF00) + value);
+                }
+                else if (ReadLoad == CounterReadLoad.MostSig)
+                {
+                    Value = (ushort) ((value << 8) + ((byte) (Value)));
+                }
+                else if (ReadLoad == CounterReadLoad.LeastMostSig)
+                {
+                    if (!_rlType)
+                    {
+                        _rlType = !_rlType;
+                        Value = (ushort)((Value & 0xFF00) + value);
+                    }
+                    else
+                    {
+                        _rlType = !_rlType;
+                        Value = (ushort)((value << 8) + ((byte)(Value)));
+                        Active = true;
+                    }
+                }
+                LastWrittenValue = Value;
+            }
+        }
+
+        private static int PORT_STATUS  = 0xFB;
+        private static int PORT_COUNT0  = 0xE4;
+        private static int PORT_COUNT1  = 0xE5;
+        private static int PORT_COUNT2  = 0xE6;
+        private static int PORT_CONTROL = 0xE7;
+
+        private static int CTL_BCD = (1 << 0);
+
+        private static int CTL_MODE_MASK = 0x7;
+        private static int CTL_MODE_SHIFT = 1;
+        private static int CTL_MODE_0 = 0x0;
+        private static int CTL_MODE_1 = 0x1;
+        private static int CTL_MODE_2 = 0x2;
+        private static int CTL_MODE_3 = 0x3;
+        private static int CTL_MODE_4 = 0x4;
+        private static int CTL_MODE_5 = 0x5;
+
+        private static int CTL_RL_MASK     = 0x3;
+        private static int CTL_RL_SHIFT     = 4;
+        private static int CTL_RL_LATCH     = 0x0;
+        private static int CTL_RL_READ_LO   = 0x1;
+        private static int CTL_RL_READ_HI   = 0x2;
+        private static int CTL_RL_READ_LOHI = 0x3;
+        
+        private static int CTL_SEL_MASK = 0x3;
+        private static int CTL_SEL_SHIFT = 6;
+        private static int CTL_SEL_0 = 0;
+        private static int CTL_SEL_1 = 1;
+        private static int CTL_SEL_2 = 2;
+
+        private Stopwatch clock = new Stopwatch();
+
+        private static int CLK_HERTZ = 250 * 1000;
+
+        public Counter CountZero { get; } = new Counter();
+        public Counter CountOne { get; } = new Counter();
+        public Counter CountTwo { get; } = new Counter();
+
+        private bool timerZero = false;
+        private bool timerOne = false;
+
+        private Intel8259 _pic;
+
+        public Intel8253(Intel8259 pic)
+        {
+            _pic = pic;
+            clock.Start();
+        }
+
+        public void Step()
+        {
+            if (clock.ElapsedMilliseconds > 60 / (CLK_HERTZ * 1000))
+            {
+                var beforeZero = CountZero.Output;
+                CountZero.Pulse();
+                if (!beforeZero && CountZero.Output)
+                    CountOne.Pulse();
+
+                CountTwo.Pulse();
+
+                if (CountZero.Output)
+                    timerZero = true;
+                if (CountTwo.Output)
+                    timerOne = true;
+
+                if (timerOne || timerZero)
+                    _pic.RequestInterrupt(2);
+
+                clock.Restart();
+            }
         }
 
         public byte Read(int port)
         {
-            byte current_byte = 0;
+            if (port == PORT_CONTROL)
+                throw new InvalidOperationException();
 
-            if( ( _accessmode == MODE_LATCHCOUNT ) ||
-                ( _accessmode == MODE_LOBYTE ) ||
-                ( ( _accessmode == MODE_TOGGLE ) && _bytetoggle == USE_LO_BYTE ) )
+            if (port == PORT_COUNT0)
             {
-                current_byte = USE_LO_BYTE;
+                return CountZero.Read();
             }
-            else if ((_accessmode == MODE_HIBYTE) ||
-                ((_accessmode == MODE_TOGGLE) && _bytetoggle == USE_HI_BYTE))
+            else if (port == PORT_COUNT1)
             {
-                current_byte = USE_HI_BYTE;
+                return CountOne.Read();
             }
-
-
-            if ( (_accessmode == MODE_LATCHCOUNT) || (_accessmode == MODE_TOGGLE) )
+            else if (port == PORT_COUNT2)
             {
-                // toggle between lo and hi
-                _bytetoggle = (byte)((~_bytetoggle) & 0x01);
+                return CountTwo.Read();
             }
-
-            if( current_byte == USE_LO_BYTE )
+            else if (port == PORT_STATUS)
             {
-                return (byte)_counter;
-            }
-            else
-            {
-                return (byte)(_counter >> 8);
+                return (byte)((timerZero ? 1 : 0) + ((timerOne ? 1 : 0) << 1));
             }
 
+            throw new InvalidOperationException();
         }
 
         public ushort Read16(int port)
@@ -75,56 +240,56 @@ namespace z100emu.Peripheral
 
         public void Write(int port, byte data)
         {
-            byte current_byte = 0;
-            if(port == 0x43) // mode/command register
+            if (port == PORT_CONTROL)
             {
-                _accessmode = (byte)((data >> 4) & 0x03);
-                if( _accessmode == MODE_TOGGLE )
+                Counter counter = null;
+                var counterNum = (data >> CTL_SEL_SHIFT) & CTL_SEL_MASK;
+                var readLoad = (data >> CTL_RL_SHIFT) & CTL_RL_MASK;
+                var mode = (data >> CTL_MODE_SHIFT) & CTL_MODE_MASK;
+                var bcd = (data & 1) == 1;
+
+                if (counterNum == 0)
                 {
-                    _bytetoggle = USE_LO_BYTE;
+                    counter = CountZero;
                 }
+                else if (counterNum == 1)
+                {
+                    counter = CountOne;
+                }
+                else if (counterNum == 2)
+                {
+                    counter = CountTwo;
+                }
+
+                counter.ReadLoad = (CounterReadLoad) readLoad;
+                counter.Mode = (CounterMode) mode;
+                counter.BCD = bcd;
+
+                if (counter.Mode == CounterMode.Mode0)
+                    counter.Value = counter.LastWrittenValue;
+
+                if (bcd)
+                    throw new NotImplementedException();
+
+                if (counter.ReadLoad == CounterReadLoad.Latch)
+                    counter.LatchedValue = counter.Value;
             }
-            else
+            else if (port == PORT_COUNT0)
             {
-                if( ( _accessmode == MODE_LOBYTE ) ||
-                    ( ( _accessmode== MODE_TOGGLE) && ( _bytetoggle == USE_LO_BYTE) ) )
-                {
-                    current_byte = USE_LO_BYTE;
-                }
-                else if( ( _accessmode == MODE_HIBYTE ) ||
-                    ( ( _accessmode == MODE_TOGGLE ) && ( _bytetoggle == USE_HI_BYTE ) ) )
-                {
-                    current_byte = USE_HI_BYTE;
-                }
-
-                if( current_byte == USE_LO_BYTE)
-                {
-                    _channeldata = (ushort)((_channeldata & 0xff00) | data);
-                }
-                else
-                {
-                    _channeldata = (ushort)((_channeldata & 0x00ff) | data);
-                }
-
-                if( _channeldata == 0 )
-                {
-                    _effdata = 0x10000;
-                }
-                else
-                {
-                    _effdata = _channeldata;
-                }
-
-                Active = true;
-
-                _tick_gap = _host_frequency / (1193182 / _effdata);
-                if( _accessmode == MODE_TOGGLE )
-                {
-                    // toggle between lo and hi
-                    _bytetoggle = (byte)((~_bytetoggle) & 0x01);
-                }
-
-                _chanfreq = ((1193182.0 / (double)_effdata) * 1000.0) / 1000.0;
+                CountZero.Write(data);
+            }
+            else if (port == PORT_COUNT1)
+            {
+                CountOne.Write(data);
+            }
+            else if (port == PORT_COUNT2)
+            {
+                CountTwo.Write(data);
+            }
+            else if (port == PORT_STATUS)
+            {
+                timerZero = (data & 1) == 1;
+                timerOne = (data & 2) == 2;
             }
         }
 

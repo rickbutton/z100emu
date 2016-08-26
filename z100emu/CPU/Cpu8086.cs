@@ -248,12 +248,12 @@ namespace z100emu.CPU
                 Interrupt((byte)i.Value);
             }
 
-            string instructionText = $"{GetRegister(Register.CS):X4}:{GetRegister(Register.IP):X4} ";
             var instruction = OpCodeManager.Decode(this);
-            instructionText += OutputInstruction(instruction);
 
             if (debug)
             {
+                string instructionText = $"{GetRegister(Register.CS):X4}:{GetRegister(Register.IP):X4} ";
+                instructionText += OutputInstruction(instruction);
                 Console.Out.WriteLine(instructionText);
             }
 
@@ -1528,12 +1528,12 @@ namespace z100emu.CPU
             var port = cpu.GetInstructionValue(instruction.Flag, instruction.SegmentPrefix, instruction.Argument2, instruction.Argument2Value, instruction.Argument2Displacement);
             var device = cpu.GetPortDevice(port);
             if (device == null)
-                return;
-                //throw new InvalidOperationException($"Tried to read from port 0x{port.ToString("X")}");
+                throw new InvalidOperationException($"Tried to read from port 0x{port.ToString("X")}");
 
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
                 cpu.SetRegister(Register.AL, device.Read(port));
+                Console.WriteLine($"IN {port.ToString("X")}:{cpu.GetRegister(Register.AL)}");
             }
             else
             {
@@ -1546,11 +1546,11 @@ namespace z100emu.CPU
 
             var device = cpu.GetPortDevice(port);
             if (device == null)
-                return;
-                //throw new InvalidOperationException($"Tried to read from port 0x{port.ToString("X")}");
+                throw new InvalidOperationException($"Tried to read from port 0x{port.ToString("X")}");
 
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
+                Console.WriteLine($"OUT {port.ToString("X")}:{cpu.GetRegister(Register.AL)}");
                 device.Write(port, (byte) cpu.GetRegister(Register.AL));
             }
             else

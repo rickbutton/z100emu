@@ -193,15 +193,13 @@ namespace z100emu.Peripheral.Zenith
             }
             else if (port == PORT_ADDR_REG)
             {
-                Console.WriteLine($"Trying to write {value.ToString("X")} to port {port.ToString("X")}");
-                /*if (value >= _regs.Length)
+                if (value >= _regs.Length)
                     throw new InvalidOperationException($"Tried to set 6845 Address register to invalid value [{value}]");
-                _regPointer = value;*/
+                _regPointer = value;
             }
             else if (port == PORT_REG)
             {
-                Console.WriteLine($"Trying to write {value.ToString("X")} to port {port.ToString("X")}");
-                //_regs[_regPointer] = value;
+                _regs[_regPointer] = value;
             }
             else if (port == PORT_CONTROL_A)
             {
