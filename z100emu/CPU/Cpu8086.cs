@@ -1533,7 +1533,7 @@ namespace z100emu.CPU
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
                 cpu.SetRegister(Register.AL, device.Read(port));
-                Console.WriteLine($"IN {port.ToString("X")}:{cpu.GetRegister(Register.AL)}");
+                Console.WriteLine($"IN {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
             }
             else
             {
@@ -1550,7 +1550,7 @@ namespace z100emu.CPU
 
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
-                Console.WriteLine($"OUT {port.ToString("X")}:{cpu.GetRegister(Register.AL)}");
+                Console.WriteLine($"OUT {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
                 device.Write(port, (byte) cpu.GetRegister(Register.AL));
             }
             else

@@ -23,8 +23,10 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
 using SDL2;
 using z100emu.Core;
 using z100emu.CPU;
@@ -71,14 +73,17 @@ namespace z100emu.GUI
                 cpu.AttachPortDevice(new ZenithMemControl(ram, rom));
                 cpu.AttachPortDevice(new ZenithReserved());
 
-                cpu.AttachPortDevice(new Zenith8041a());
+                var kb = new Zenith8041a(master8259);
+
+                cpu.AttachPortDevice(kb);
                 cpu.AttachPortDevice(new ZenithParallel());
 
                 cpu.AttachPortDevice(new ZenithDIP());
 
                 cpu.AttachPortDevice(new ZenithWinchester());
 
-                cpu.AttachPortDevice(new ZenithFloppy(master8259));
+                cpu.AttachPortDevice(new ZenithFloppy(master8259, 0xB0));
+                cpu.AttachPortDevice(new ZenithFloppy(master8259, 0xB8));
 
                 ram.MapBank(video);
                 cpu.AttachPortDevice(video);
@@ -89,16 +94,16 @@ namespace z100emu.GUI
                 var quit = false;
                 while (!quit)
                 {
-                    /*SDL.SDL_Event evt;
+                    SDL.SDL_Event evt;
                     while (SDL.SDL_PollEvent(out evt) != 0)
                     {
                         if (evt.type == SDL.SDL_EventType.SDL_QUIT)
                             quit = true;
-                    }*/
-                    SDL.SDL_Event evt;
-                    SDL.SDL_PollEvent(out evt);
-                    if (evt.type == SDL.SDL_EventType.SDL_QUIT)
-                        quit = true;
+                        else if (evt.type == SDL.SDL_EventType.SDL_KEYDOWN)
+                        {
+                            kb.Input((byte)evt.key.keysym.sym);
+                        }
+                    }
 
                     timer.Step();
                     video.Step();

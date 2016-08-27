@@ -168,7 +168,7 @@ namespace z100emu.Peripheral
 
         private Stopwatch clock = new Stopwatch();
 
-        private static int CLK_HERTZ = 250 * 1000;
+        private static long CLK_HERTZ = 250*1000;
 
         public Counter CountZero { get; } = new Counter();
         public Counter CountOne { get; } = new Counter();
@@ -187,7 +187,7 @@ namespace z100emu.Peripheral
 
         public void Step()
         {
-            if (clock.ElapsedMilliseconds > 60 / (CLK_HERTZ * 1000))
+            if (clock.ElapsedMilliseconds > 60 / CLK_HERTZ * 1000)
             {
                 var beforeZero = CountZero.Output;
                 CountZero.Pulse();

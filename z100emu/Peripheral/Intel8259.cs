@@ -10,9 +10,9 @@ namespace z100emu.Peripheral
         private const byte PIC2_COMMAND = 0xF0;
         private const byte PIC2_DATA = 0xF1;
 
-        private bool[] _mask = new bool[8];
-        private bool[] _request = new bool[8];
-        private bool[] _service = new bool[8];
+        private byte _mask    = 0;
+        private byte _request = 0;
+        private byte _service = 0;
         private byte[] _icw = new byte[4];   // icw
 
         // ICW1
@@ -65,7 +65,7 @@ namespace z100emu.Peripheral
 
         public Intel8259(Intel8259 slave)
         {
-            _readmode = (byte)OCW3_READ_IRR;
+            _readmode = (byte) OCW3_READ_IRR;
             _slave = slave;
         }
 
@@ -96,15 +96,17 @@ namespace z100emu.Peripheral
         public int? GetNextInterrupt()
         {
             if (!_initialized)
-                return null; 
+                return null;
 
             for (var i = 0; i < 8; i++)
             {
                 for (var z = 0; z <= i; z++)
-                    if (_service[i])
+                    if ((_service & (1 << i)) == 1)
                         return null;
 
-                if (!_mask[i] && _request[i])
+                var m = (_mask & (1 << i)) == 0;
+                var r = (_request & (1 << i)) != 0;
+                if (m && r)
                 {
                     if (_slave != null && i == _slaveInt)
                     {
@@ -126,11 +128,11 @@ namespace z100emu.Peripheral
                 if (_slave == null)
                     throw new InvalidOperationException("Tried to request interrupt > 7 on slave");
                 _slave.RequestInterrupt(i - 8);
-                _request[_slaveInt] = true;
+                _request = (byte)(_request | (1 << _slaveInt));
             }
             else
             {
-                _request[i] = true;
+                _request = (byte)(_request | (1 << i));
             }
         }
 
@@ -141,11 +143,11 @@ namespace z100emu.Peripheral
                 if (_slave == null)
                     throw new InvalidOperationException("Tried to ack interrupt > 7 on slave");
                 _slave.AckInterrupt(i - 8);
-                _request[_slaveInt] = false;
+                _request = (byte)(_request & ~(1 << _slaveInt));
             }
             else
             {
-                _request[i] = false;
+                _request = (byte)(_request & ~(1 << i));
                 if (!AutoEOI)
                     RequestService(i);    
             }
@@ -158,11 +160,11 @@ namespace z100emu.Peripheral
                 if (_slave == null)
                     throw new InvalidOperationException("Tried to request service > 7 on slave");
                 _slave.RequestService(i - 8);
-                _service[_slaveInt] = true;
+                _service = (byte)(_service | (1 << _slaveInt));
             }
             else
             {
-                _service[i] = true;
+                _service = (byte)(_service | (1 << i));
             }
         }
 
@@ -173,29 +175,11 @@ namespace z100emu.Peripheral
                 if (_slave == null)
                     throw new InvalidOperationException("Tried to ack service > 7 on slave");
                 _slave.AckService(i - 8);
-                _service[_slaveInt] = false;
+                _service = (byte)(_service & ~(1 << _slaveInt));
             }
             else
             {
-                _service[i] = false;
-            }
-        }
-
-        private byte ToBits(bool[] arr)
-        {
-            byte v = 0;
-            for (var i = 0; i < 8; i++)
-            {
-                v += (byte)((arr[i] ? 1 : 0) << i);
-            }
-            return v;
-        }
-
-        private void SetBits(bool[] arr, byte value)
-        {
-            for (var i = 0; i < 8; i++)
-            {
-                arr[i] = ((value >> i) & 1) != 0;
+                _service = (byte)(_service & ~(1 << i));
             }
         }
 
@@ -203,17 +187,17 @@ namespace z100emu.Peripheral
         {
             if ((port == PIC1_DATA) || (port == PIC2_DATA))
             {
-                return ToBits(_mask);
+                return _mask;
             }
             else
             {
                 if ((_readmode & OCW3_READ_IRR) == OCW3_READ_IRR)
                 {
-                    return ToBits(_request);
+                    return _request;
                 }
                 else
                 {
-                    return ToBits(_service);
+                    return _service;
                 }
             }
         }
@@ -262,7 +246,7 @@ namespace z100emu.Peripheral
                     return;
                 }
                 _initialized = true;
-                SetBits(_mask, data);
+                _mask = data;
             }
             else
             {
@@ -270,7 +254,7 @@ namespace z100emu.Peripheral
                 {
                     _initialized = false;
                     _icwstep = 0;
-                    SetBits(_mask, 0);
+                    _mask = 0;
                     _icw[_icwstep++] = data;
 
                     IsSingle8259 = (data & ICW1_SINGLE) == ICW1_SINGLE;

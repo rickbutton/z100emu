@@ -16,6 +16,16 @@ namespace z100emu.Peripheral.Zenith
         private static int PORT_ADDR_REG   = 0xDC;
         private static int PORT_REG        = 0xDD;
 
+        private static int REG_V_DIS        = 0x6;
+        private static int REG_MAX_RAS_ADDR = 0x9;
+        private static int REG_CUR_ST_RAS   = 0xA;
+        private static int REG_CUR_EN_RAS   = 0xB;
+        private static int REG_START_HIGH   = 0xC;
+        private static int REG_START_LOW    = 0xD;
+
+        private static int REG_CUR_ST_HI    = 0xE;
+        private static int REG_CUR_ST_LO    = 0xF;
+
         private static int RED_START   = 0xD0000;
         private static int BLUE_START  = 0xC0000;
         private static int GREEN_START = 0xE0000;
@@ -28,8 +38,9 @@ namespace z100emu.Peripheral.Zenith
         private static int REAL_WIDTH  = 80 * 8;
         private static int REAL_HEIGHT = 25 * 9;
 
-        private static uint SYNC_NS = 16666666;
-        private static int NS_PER_MS = 1000000;
+        private static int HERTZ = 60;
+        //private static uint SYNC_NS = 16666666;
+        //private static int NS_PER_MS = 1000000;
 
         private byte _io;
 
@@ -143,7 +154,7 @@ namespace z100emu.Peripheral.Zenith
 
         public void Step()
         {
-            if (_syncCounter.ElapsedMilliseconds * NS_PER_MS >= SYNC_NS)
+            if (_syncCounter.ElapsedMilliseconds > 60 / HERTZ * 1000)
             //if (_syncCounter.ElapsedMilliseconds >= 1000)
             {
                 Draw();
@@ -200,6 +211,35 @@ namespace z100emu.Peripheral.Zenith
             else if (port == PORT_REG)
             {
                 _regs[_regPointer] = value;
+
+                if (_regPointer == REG_V_DIS)
+                {
+                    
+                }
+                else if (_regPointer == REG_MAX_RAS_ADDR)
+                {
+                    
+                }
+                else if (_regPointer == REG_CUR_ST_RAS)
+                {
+                    
+                }
+                else if (_regPointer == REG_CUR_EN_RAS)
+                {
+                    
+                }
+                else if (_regPointer == REG_START_HIGH)
+                {
+                    
+                }
+                else if (_regPointer == REG_START_LOW)
+                {
+
+                }
+                else
+                {
+                    
+                }
             }
             else if (port == PORT_CONTROL_A)
             {
