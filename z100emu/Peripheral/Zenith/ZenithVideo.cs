@@ -38,9 +38,7 @@ namespace z100emu.Peripheral.Zenith
         private static int REAL_WIDTH  = 80 * 8;
         private static int REAL_HEIGHT = 25 * 9;
 
-        private static int HERTZ = 60;
-        //private static uint SYNC_NS = 16666666;
-        //private static int NS_PER_MS = 1000000;
+        private static double CLK_US = 16666.666666667;
 
         private byte _io;
 
@@ -61,7 +59,7 @@ namespace z100emu.Peripheral.Zenith
 
         private Intel8259 _pic;
 
-        private Stopwatch _syncCounter;
+        private double _us;
 
         private readonly byte[] _red   = new byte[VRAM_BANK_SIZE];
         private readonly byte[] _green = new byte[VRAM_BANK_SIZE];
@@ -76,8 +74,7 @@ namespace z100emu.Peripheral.Zenith
             this._renderer = renderer;
             this._pic = pic;
 
-            _syncCounter = Stopwatch.StartNew();
-
+            _us = 0;
             ChangeResolution();
         }
 
@@ -152,14 +149,14 @@ namespace z100emu.Peripheral.Zenith
         }
         #endregion
 
-        public void Step()
+        public void Step(double us)
         {
-            if (_syncCounter.ElapsedMilliseconds > 60 / HERTZ * 1000)
-            //if (_syncCounter.ElapsedMilliseconds >= 1000)
+            _us += us;
+            while (_us >= CLK_US)
             {
                 Draw();
-                _syncCounter.Restart();
                 _pic.RequestInterrupt(6);
+                _us -= CLK_US;
             }
         }
 

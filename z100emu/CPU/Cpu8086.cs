@@ -230,17 +230,7 @@ namespace z100emu.CPU
             SetRegister(Register.IP, 0xFFF0);
         }
 
-        public bool ProcessInstructions(int amount)
-        {
-            for (var i = 0; i < amount; i++)
-            {
-                if (!ProcessSingleInstruction())
-                    return false;
-            }
-            return true;
-        }
-
-        public bool ProcessSingleInstruction(bool debug = false)
+        public int ProcessSingleInstruction(bool debug = false)
         {
             var i = _pic.GetNextInterrupt();
             if (i != null)
@@ -258,7 +248,8 @@ namespace z100emu.CPU
             }
 
             dispatches[(int)instruction.Type](this, instruction);
-            return instruction.Type != OpCodeManager.InstructionType.Hlt;
+
+            return instruction.Clocks;
         }
 
         private ushort ProcessExchangeSecond(OpCodeManager.Instruction instruction, ushort value)
@@ -756,11 +747,13 @@ namespace z100emu.CPU
                         result = (byte)value1;
                         if (cpu.flags.Has(FlagsRegister.Carry))
                             result |= 0x100;
-                        result = (byte)(result >> shift) | (byte)(result << (-shift & mask));
-                        if ((result & 0x100) != 0)
+
+                        if ((result & 0x1) != 0)
                             cpu.flags |= FlagsRegister.Carry;
                         else cpu.flags &= ~FlagsRegister.Carry;
 
+                        result = (byte)(result >> shift) | (byte)(result << (-shift & mask));
+                        
                         if (value2 == 1)
                         {
                             if (((result & 0x80) != 0) ^ ((result & 0x40) != 0))
@@ -776,10 +769,12 @@ namespace z100emu.CPU
                         result = value1;
                         if (cpu.flags.Has(FlagsRegister.Carry))
                             result |= 0x10000;
-                        result = (ushort)(result >> shift) | (ushort)(result << (-shift & mask));
-                        if ((result & 0x10000) != 0)
+
+                        if ((result & 0x1) != 0)
                             cpu.flags |= FlagsRegister.Carry;
                         else cpu.flags &= ~FlagsRegister.Carry;
+
+                        result = (ushort)(result >> shift) | (ushort)(result << (-shift & mask));
 
                         if (value2 == 1)
                         {
@@ -788,7 +783,7 @@ namespace z100emu.CPU
                             else cpu.flags &= ~FlagsRegister.Overflow;
                         }
                     }
-                    cpu.CalculateBitwiseFlags(instruction.Flag, value1, value2, result);
+                    //cpu.CalculateBitwiseFlags(instruction.Flag, value1, value2, result);
                     break;
 
                 case OpCodeManager.InstructionType.Rol:
@@ -1362,7 +1357,11 @@ namespace z100emu.CPU
         }
         private static void DispatchMoveString([NotNull] Cpu8086 cpu, OpCodeManager.Instruction instruction)
         {
-            var sourceAddress = SegmentToAddress(cpu.GetRegister(Register.DS), cpu.GetRegister(Register.SI));
+            var segment = Register.DS;
+            if (instruction.SegmentPrefix != Register.Invalid)
+                segment = instruction.SegmentPrefix;
+
+            var sourceAddress = SegmentToAddress(cpu.GetRegister(segment), cpu.GetRegister(Register.SI));
             var destAddress = SegmentToAddress(cpu.GetRegister(Register.ES), cpu.GetRegister(Register.DI));
             byte size;
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
@@ -1533,7 +1532,7 @@ namespace z100emu.CPU
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
                 cpu.SetRegister(Register.AL, device.Read(port));
-                Console.WriteLine($"IN {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
+                //Console.WriteLine($"IN {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
             }
             else
             {
@@ -1550,7 +1549,7 @@ namespace z100emu.CPU
 
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {
-                Console.WriteLine($"OUT {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
+                //Console.WriteLine($"OUT {port.ToString("X")}:{cpu.GetRegister(Register.AL).ToString("X")}");
                 device.Write(port, (byte) cpu.GetRegister(Register.AL));
             }
             else

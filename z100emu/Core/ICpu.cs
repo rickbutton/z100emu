@@ -33,18 +33,11 @@ namespace z100emu.Core
     public interface ICpu
     {
         /// <summary>
-        /// Executes <paramref name="amount"/> of instructions, or until the virtual CPU halts.
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <returns>Returns false if the CPU halts.</returns>
-        [PublicAPI]
-        bool ProcessInstructions(int amount);
-        /// <summary>
         /// Executes one instruction.
         /// </summary>
-        /// <returns>Returns false if the CPU halts.</returns>
+        /// <returns>Returns number of clocks.</returns>
         [PublicAPI]
-        bool ProcessSingleInstruction(bool debug = false);
+        int ProcessSingleInstruction(bool debug = false);
         /// <summary>
         /// Reads from the virtual memory and copies it to a new array.
         /// </summary>

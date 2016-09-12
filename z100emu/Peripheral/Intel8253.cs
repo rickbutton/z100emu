@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using z100emu.Core;
@@ -166,9 +167,9 @@ namespace z100emu.Peripheral
         private static int CTL_SEL_1 = 1;
         private static int CTL_SEL_2 = 2;
 
-        private Stopwatch clock = new Stopwatch();
+        private double _us;
 
-        private static long CLK_HERTZ = 250*1000;
+        private static long CLK_US = 4;
 
         public Counter CountZero { get; } = new Counter();
         public Counter CountOne { get; } = new Counter();
@@ -177,17 +178,25 @@ namespace z100emu.Peripheral
         private bool timerZero = false;
         private bool timerOne = false;
 
+        private Queue<byte> _timerHack = new Queue<byte>();
+
         private Intel8259 _pic;
 
         public Intel8253(Intel8259 pic)
         {
             _pic = pic;
-            clock.Start();
+            _us = 0;
+
+            //for(var i = 0; i < 3; i++) _timerHack.Enqueue(1);
+            //_timerHack.Enqueue(2);
+            //for(var i = 0; i < 25; i++) _timerHack.Enqueue(0);
         }
 
-        public void Step()
+        public void Step(double us)
         {
-            if (clock.ElapsedMilliseconds > 60 / CLK_HERTZ * 1000)
+            _us += us;
+
+            while (_us >= CLK_US)
             {
                 var beforeZero = CountZero.Output;
                 CountZero.Pulse();
@@ -203,8 +212,10 @@ namespace z100emu.Peripheral
 
                 if (timerOne || timerZero)
                     _pic.RequestInterrupt(2);
+                else
+                    _pic.AckInterrupt(2);
 
-                clock.Restart();
+                _us -= CLK_US;
             }
         }
 
@@ -227,6 +238,9 @@ namespace z100emu.Peripheral
             }
             else if (port == PORT_STATUS)
             {
+                if (_timerHack.Count > 0)
+                    return _timerHack.Dequeue();
+
                 return (byte)((timerZero ? 1 : 0) + ((timerOne ? 1 : 0) << 1));
             }
 
@@ -276,6 +290,7 @@ namespace z100emu.Peripheral
             }
             else if (port == PORT_COUNT0)
             {
+                timerZero = false;
                 CountZero.Write(data);
             }
             else if (port == PORT_COUNT1)
@@ -284,6 +299,7 @@ namespace z100emu.Peripheral
             }
             else if (port == PORT_COUNT2)
             {
+                timerOne = false;
                 CountTwo.Write(data);
             }
             else if (port == PORT_STATUS)

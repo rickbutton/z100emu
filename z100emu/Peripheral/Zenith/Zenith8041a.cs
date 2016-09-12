@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Media;
+using System.Threading;
 using z100emu.Core;
 
 namespace z100emu.Peripheral.Zenith
@@ -27,6 +29,7 @@ namespace z100emu.Peripheral.Zenith
         private static int CMD_DIS_INT  = 0xD;
 
         private Queue<byte> _buffer;
+        private bool _keyClick = false;
         private bool _interruptsEnabled = false;
         private Intel8259 _pic;
 
@@ -39,8 +42,11 @@ namespace z100emu.Peripheral.Zenith
         public void Input(byte b)
         {
             _buffer.Enqueue(b);
+
             if (_interruptsEnabled)
                 _pic.RequestInterrupt(6);
+            if (_keyClick)
+                Beep();
         }
 
         private void Reset()
@@ -50,7 +56,8 @@ namespace z100emu.Peripheral.Zenith
 
         private void Beep()
         {
-            //Console.Beep(37, 1);
+            Action action = Console.Beep;
+            action.BeginInvoke(null, null);
         }
 
         public byte Read(int port)
@@ -63,12 +70,9 @@ namespace z100emu.Peripheral.Zenith
             {
                 if (_buffer.Count > 0)
                 {
-                    _pic.AckInterrupt(6);
+                    if (_buffer.Count == 1)
+                        _pic.AckInterrupt(6);
                     return _buffer.Dequeue();
-                }
-                else
-                {
-                    return 0;
                 }
             }
 
@@ -86,6 +90,8 @@ namespace z100emu.Peripheral.Zenith
             {
                 if (value == CMD_RESET)
                     Reset();
+                else if (value == CMD_CLICK)
+                    Beep();
                 else if (value == CMD_BEEP)
                     Beep();
                 else if (value == CMD_EN_INT)
@@ -94,6 +100,10 @@ namespace z100emu.Peripheral.Zenith
                     _interruptsEnabled = false;
                 else
                     throw new NotImplementedException();
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
         public void Write16(int port, ushort value) { Write(port, (byte)value); }

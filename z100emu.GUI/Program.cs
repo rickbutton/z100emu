@@ -62,6 +62,8 @@ namespace z100emu.GUI
                 var ram = new ZenithRam(1024 * 1024, master8259);
                 ram.MapBank(rom);
 
+                var disk = File.ReadAllBytes("MSDOS33-1.IMG");
+
                 ICpu cpu = new Cpu8086(ram, master8259);
 
                 var timer = new Intel8253(master8259);
@@ -82,14 +84,17 @@ namespace z100emu.GUI
 
                 cpu.AttachPortDevice(new ZenithWinchester());
 
-                cpu.AttachPortDevice(new ZenithFloppy(master8259, 0xB0));
-                cpu.AttachPortDevice(new ZenithFloppy(master8259, 0xB8));
+                var masterFloppy = new ZenithFloppy(master8259, 0xB0, disk);
+                cpu.AttachPortDevice(masterFloppy);
+                cpu.AttachPortDevice(new ZenithFloppy(master8259, 0xB8, disk));
 
                 ram.MapBank(video);
                 cpu.AttachPortDevice(video);
 
 
                 var debug = false;
+
+                double cpuHertz = 4.77*1000000;
 
                 var quit = false;
                 while (!quit)
@@ -105,9 +110,15 @@ namespace z100emu.GUI
                         }
                     }
 
-                    timer.Step();
-                    video.Step();
-                    cpu.ProcessSingleInstruction(debug);
+                    
+
+
+                    double clocks = cpu.ProcessSingleInstruction(debug);
+                    double us = (clocks/cpuHertz)*1000000;
+
+                    timer.Step(us);
+                    video.Step(us);
+                    masterFloppy.Step(us);
                 }
             }
 
