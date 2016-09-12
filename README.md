@@ -2,7 +2,9 @@
 
 A Zenith Data Systems Z-100 emulator.
 
-Partially implemented. z100emu can boot the system rom, but fails early because of missing hardware emulation. More to come at some point.
+Partially implemented. z100emu can now boot to the ROM with no hardware faults!!! But no floppy/hard disk hardware is implemented, so you can't really do much yet. Stay tuned.
+
+![ScreenShot](https://raw.github.com/rickbutton/z100emu/master/screenshot.png)
 
 # Attribution Notes
 
