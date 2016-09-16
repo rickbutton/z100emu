@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SDL2;
 using z100emu.Peripheral;
 
 namespace z100emu.Ram
@@ -10,11 +11,14 @@ namespace z100emu.Ram
         private IList<IRamBank> _banks;
         private Intel8259 _pic;
 
+        private bool _interrupt;
+
         public ZenithRam(int size, Intel8259 pic)
         {
             _memory = new byte[size];
             _banks = new List<IRamBank>();
             _pic = pic;
+            _pic.RegisterInterrupt(0, () => _interrupt);
         }
 
         public byte this[int pos]
@@ -39,7 +43,11 @@ namespace z100emu.Ram
 
                 if (ZeroParity && parity == 1 && !KillParity)
                 {
-                    _pic.RequestInterrupt(0);
+                    _interrupt = true;
+                }
+                else
+                {
+                    _interrupt = false;
                 }
 
                 return mem;
@@ -52,6 +60,7 @@ namespace z100emu.Ram
                     if (success)
                         return;
                 }
+
                 _memory[pos] = value;
             }
         }
@@ -81,7 +90,7 @@ namespace z100emu.Ram
 
         public void ClearParityError()
         {
-            _pic.AckInterrupt(0);
+            _interrupt = false;
         }
     }
 }

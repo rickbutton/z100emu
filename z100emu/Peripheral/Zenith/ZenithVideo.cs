@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using SDL2;
 using z100emu.Core;
 using z100emu.Ram;
@@ -58,6 +59,7 @@ namespace z100emu.Peripheral.Zenith
         private IntPtr _texture;
 
         private Intel8259 _pic;
+        private bool _interrupt = false;
 
         private double _us;
 
@@ -73,6 +75,8 @@ namespace z100emu.Peripheral.Zenith
             this._window = window;
             this._renderer = renderer;
             this._pic = pic;
+
+            this._pic.RegisterInterrupt(6, () => _interrupt);
 
             _us = 0;
             ChangeResolution();
@@ -152,10 +156,11 @@ namespace z100emu.Peripheral.Zenith
         public void Step(double us)
         {
             _us += us;
-            while (_us >= CLK_US)
+            _interrupt = false;
+            if (_us >= CLK_US)
             {
                 Draw();
-                _pic.RequestInterrupt(6);
+                _interrupt = true;
                 _us -= CLK_US;
             }
         }

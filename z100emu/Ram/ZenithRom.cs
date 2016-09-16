@@ -31,9 +31,6 @@ namespace z100emu.Ram
                 {
                     var index = pos - ((1024*1024) - _rom.Length);
 
-                    if (index == 0x491)
-                        Console.WriteLine("TEST");
-
                     value = _rom[index];
                     return true;
                 }

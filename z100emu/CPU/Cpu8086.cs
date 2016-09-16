@@ -24,6 +24,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 using JetBrains.Annotations;
 using z100emu.Core;
 using z100emu.Peripheral;
@@ -233,6 +234,7 @@ namespace z100emu.CPU
         public int ProcessSingleInstruction(bool debug = false)
         {
             var i = _pic.GetNextInterrupt();
+
             if (i != null)
             {
                 Interrupt((byte)i.Value);
@@ -400,22 +402,40 @@ namespace z100emu.CPU
 
         public void Interrupt(byte interrupt)
         {
-            if (!flags.Has(FlagsRegister.Interrupt))
+            if (interrupt <= 15 && !GetFlags().HasFlag(FlagsRegister.Interrupt))
                 return;
 
-            int size = _pic.GetInterruptVectorSize(interrupt);
-            int intBase = _pic.GetInterruptVectorBase(interrupt);
+            int size = 4;
+            int intBase;
+
+
+            if (interrupt == 90)
+                Console.WriteLine(interrupt);
+
+            if (interrupt > 15)
+            {
+                intBase = 0;
+            }
+            else
+            {
+                size = _pic.GetInterruptVectorSize(interrupt);
+                intBase = _pic.GetInterruptVectorBase(interrupt);
+                _pic.AckInterrupt();
+            }
 
             var newIP = ReadU16((uint) ((intBase + interrupt)*size));
             var newCS = ReadU16((uint) (((intBase + interrupt)*size) + 2));
 
             Push(GetRegister(Register.FLAGS));
+
+            if (interrupt > 15)
+                SetFlags(GetFlags() & ~FlagsRegister.Interrupt);
+
             Push(GetRegister(Register.CS));
             Push(GetRegister(Register.IP));
             SetRegister(Register.IP, newIP);
             SetRegister(Register.CS, newCS);
 
-            _pic.AckInterrupt(interrupt);
         }
 
         private void CalculateIncFlags(OpCodeManager.OpCodeFlag flag, ushort value1, ushort value2, int result)
@@ -1482,7 +1502,10 @@ namespace z100emu.CPU
         }
         private static void DispatchInto([NotNull] Cpu8086 cpu, OpCodeManager.Instruction instruction)
         {
-            throw new NotImplementedException();
+            if (cpu.GetFlags().Has(FlagsRegister.Overflow))
+            {
+                cpu.Interrupt(4);
+            }
         }
         private static void DispatchReturnInterrupt([NotNull] Cpu8086 cpu, OpCodeManager.Instruction instruction)
         {
@@ -1493,7 +1516,10 @@ namespace z100emu.CPU
         }
         private static void DispatchAam([NotNull] Cpu8086 cpu, OpCodeManager.Instruction instruction)
         {
-            throw new NotImplementedException();
+            var al = cpu.GetRegister(Register.AL);
+            cpu.SetRegister(Register.AH, (byte)(al/10));
+            cpu.SetRegister(Register.AL, (byte)(al%10));
+            cpu.CalculateBitwiseFlags(instruction.Flag, al, 0, cpu.GetRegister(Register.AX));
         }
         private static void DispatchAad([NotNull] Cpu8086 cpu, OpCodeManager.Instruction instruction)
         {
@@ -1545,7 +1571,7 @@ namespace z100emu.CPU
 
             var device = cpu.GetPortDevice(port);
             if (device == null)
-                throw new InvalidOperationException($"Tried to read from port 0x{port.ToString("X")}");
+                throw new InvalidOperationException($"Tried to write to port 0x{port.ToString("X")}");
 
             if (instruction.Flag.Has(OpCodeManager.OpCodeFlag.Size8))
             {

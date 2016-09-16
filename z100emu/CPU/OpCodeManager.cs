@@ -257,8 +257,9 @@ namespace z100emu.CPU
 
         private static ClockDef XchgClockDef(Instruction i)
         {
-            if (i.Argument1 == ARG_MEMORY && ArgumentIsRegister(i.Argument2)) { return new ClockDef(9, 2, true); }
+            if (ArgumentIsMemory(i.Argument1) && ArgumentIsRegister(i.Argument2)) { return new ClockDef(9, 2, true); }
             if (ArgumentIsRegister(i.Argument1) && ArgumentIsRegister(i.Argument2)) { return new ClockDef(4); }
+            if (ArgumentIsRegister(i.Argument1) && ArgumentIsMemory(i.Argument2)) { return new ClockDef(9, 2, true); }
             throw new NotImplementedException();
         }
 
@@ -270,7 +271,7 @@ namespace z100emu.CPU
             else if (ArgumentIsRegister(i.Argument1) && (i.Argument2 == ARG_MEMORY || i.Argument2 == ARG_DEREFERENCE)) { return new ClockDef(4, 1, true); }
             else if ((i.Argument1 == ARG_MEMORY || i.Argument1 == ARG_DEREFERENCE) && ArgumentIsRegister(i.Argument2)) { return new ClockDef(5, 1, true); }
             else if (ArgumentIsRegister(i.Argument1) && i.Argument2 == ARG_CONSTANT) { return new ClockDef(4); }
-            else if (i.Argument1 == ARG_MEMORY && i.Argument2 == ARG_CONSTANT) { return new ClockDef(6, 1, true); }
+            else if (ArgumentIsMemory(i.Argument1) && i.Argument2 == ARG_CONSTANT) { return new ClockDef(6, 1, true); }
             throw new NotImplementedException();
         }
 

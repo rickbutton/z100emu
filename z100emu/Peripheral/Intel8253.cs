@@ -169,7 +169,7 @@ namespace z100emu.Peripheral
 
         private double _us;
 
-        private static long CLK_US = 4;
+        private static long CLK_US = 8;
 
         public Counter CountZero { get; } = new Counter();
         public Counter CountOne { get; } = new Counter();
@@ -190,30 +190,28 @@ namespace z100emu.Peripheral
             //for(var i = 0; i < 3; i++) _timerHack.Enqueue(1);
             //_timerHack.Enqueue(2);
             //for(var i = 0; i < 25; i++) _timerHack.Enqueue(0);
+
+            _pic.RegisterInterrupt(2, () => (timerOne || timerZero));
+            //_pic.RegisterInterrupt(2, () => (CountZero.Output && CountZero.Active) || (CountTwo.Output && CountTwo.Active));
         }
 
         public void Step(double us)
         {
             _us += us;
 
-            while (_us >= CLK_US)
+            if (_us >= CLK_US)
             {
                 var beforeZero = CountZero.Output;
                 CountZero.Pulse();
-                if (!beforeZero && CountZero.Output)
+                if (!beforeZero && CountZero.Output && CountZero.Active)
                     CountOne.Pulse();
 
                 CountTwo.Pulse();
 
-                if (CountZero.Output)
+                if (CountZero.Output && CountZero.Active)
                     timerZero = true;
-                if (CountTwo.Output)
+                if (CountTwo.Output && CountTwo.Active)
                     timerOne = true;
-
-                if (timerOne || timerZero)
-                    _pic.RequestInterrupt(2);
-                else
-                    _pic.AckInterrupt(2);
 
                 _us -= CLK_US;
             }
@@ -280,7 +278,10 @@ namespace z100emu.Peripheral
                 counter.BCD = bcd;
 
                 if (counter.Mode == CounterMode.Mode0)
+                {
                     counter.Value = counter.LastWrittenValue;
+                }
+                counter.Active = false;
 
                 if (bcd)
                     throw new NotImplementedException();
@@ -304,8 +305,8 @@ namespace z100emu.Peripheral
             }
             else if (port == PORT_STATUS)
             {
-                timerZero = (data & 1) == 1;
-                timerOne = (data & 2) == 2;
+                timerZero = timerZero && (data & 1) == 1;
+                timerOne = timerOne && (data & 2) == 2;
             }
         }
 

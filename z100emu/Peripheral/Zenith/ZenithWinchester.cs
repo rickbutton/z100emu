@@ -7,7 +7,7 @@ namespace z100emu.Peripheral.Zenith
         private static int STATUS = 0xAE;
         private static int COMMAND = 0xAF;
 
-        private byte _status = 0;
+        private byte _status = 0xFE;
 
         public byte Read(int port)
         {

@@ -43,16 +43,28 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="MSDOS31.IMG">
+    <None Include="msd2131.imd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="MSDOS33-1.img">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Include="MSDOS31.IMD">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="msdosv11.imd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="rom.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="v1-2.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ZDOS2N.IMD">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ZDOS3N.IMD">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ZMSDS321.IMD">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

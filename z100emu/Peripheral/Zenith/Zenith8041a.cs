@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Media;
 using System.Threading;
 using z100emu.Core;
@@ -30,6 +31,7 @@ namespace z100emu.Peripheral.Zenith
 
         private Queue<byte> _buffer;
         private bool _keyClick = false;
+        private bool _enabled = true;
         private bool _interruptsEnabled = false;
         private Intel8259 _pic;
 
@@ -41,15 +43,22 @@ namespace z100emu.Peripheral.Zenith
 
         public void Input(byte b)
         {
+            if (!_enabled)
+                return;
+
             _buffer.Enqueue(b);
 
-            if (_interruptsEnabled)
-                _pic.RequestInterrupt(6);
             if (_keyClick)
                 Beep();
         }
 
         private void Reset()
+        {
+            _enabled = true;
+            Clear();
+        }
+
+        private void Clear()
         {
             _buffer = new Queue<byte>();
         }
@@ -57,7 +66,7 @@ namespace z100emu.Peripheral.Zenith
         private void Beep()
         {
             Action action = Console.Beep;
-            action.BeginInvoke(null, null);
+            //action.BeginInvoke(null, null);
         }
 
         public byte Read(int port)
@@ -70,9 +79,13 @@ namespace z100emu.Peripheral.Zenith
             {
                 if (_buffer.Count > 0)
                 {
-                    if (_buffer.Count == 1)
-                        _pic.AckInterrupt(6);
+                    //if (_buffer.Count == 1)
+                    //    _pic.AckInterrupt(6);
                     return _buffer.Dequeue();
+                }
+                else
+                {
+                    return 0;
                 }
             }
 
@@ -90,14 +103,33 @@ namespace z100emu.Peripheral.Zenith
             {
                 if (value == CMD_RESET)
                     Reset();
+                else if (value == CMD_AUTO_ON)
+                    throw new NotImplementedException();
+                else if (value == CMD_AUTO_OFF)
+                    throw new NotImplementedException();
+                else if (value == CMD_KC_ON)
+                    throw new NotImplementedException();
+                else if (value == CMD_KC_OFF)
+                    throw new NotImplementedException();
+                else if (value == CMD_CLR_FIFO)
+                    Clear();
                 else if (value == CMD_CLICK)
                     Beep();
                 else if (value == CMD_BEEP)
                     Beep();
+                else if (value == CMD_EN_KB)
+                    _enabled = true;
+                else if (value == CMD_DIS_KB)
+                    _enabled = false;
+                else if (value == CMD_EVENT_M)
+                    throw new NotImplementedException();
+                else if (value == CMD_ASCII_M)
+                    throw new NotImplementedException();
                 else if (value == CMD_EN_INT)
                     _interruptsEnabled = true;
                 else if (value == CMD_DIS_INT)
                     _interruptsEnabled = false;
+                
                 else
                     throw new NotImplementedException();
             }
