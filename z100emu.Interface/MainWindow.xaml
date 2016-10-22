@@ -1,0 +1,13 @@
+﻿<Window x:Class="z100emu.Interface.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:z100emu.Interface"
+        mc:Ignorable="d"
+        Title="z100emu" Height="929" Width="1286" ResizeMode="NoResize" SnapsToDevicePixels="True"
+        TextInput="MainWindow_OnTextInput">
+    <Image x:Name="Image" 
+           RenderOptions.BitmapScalingMode="NearestNeighbor"
+           Stretch="Fill"></Image>
+</Window>

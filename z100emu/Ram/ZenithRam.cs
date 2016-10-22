@@ -36,7 +36,7 @@ namespace z100emu.Ram
                         return value;
                 }
 
-                var mem = _memory[pos];
+                var mem = pos >= _memory.Length ? (byte)0 : _memory[pos];
                 int parity;
 
                 parity = CountOnes(mem)%2 == 0 ? 0 : 1;
@@ -44,10 +44,6 @@ namespace z100emu.Ram
                 if (ZeroParity && parity == 1 && !KillParity)
                 {
                     _interrupt = true;
-                }
-                else
-                {
-                    _interrupt = false;
                 }
 
                 return mem;
@@ -61,7 +57,8 @@ namespace z100emu.Ram
                         return;
                 }
 
-                _memory[pos] = value;
+                if (pos < _memory.Length)
+                    _memory[pos] = value;
             }
         }
 

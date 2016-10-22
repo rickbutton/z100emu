@@ -24,9 +24,10 @@
 
 namespace z100emu.CPU
 {
-    internal interface IInstructionFetcher
+    public interface IInstructionFetcher
     {
         byte FetchU8();
         ushort FetchU16();
+        int GetBytesFetched();
     }
 }

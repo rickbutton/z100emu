@@ -1,13 +1,13 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Threading;
-using SDL2;
 using z100emu.Core;
 using z100emu.Ram;
 
 namespace z100emu.Peripheral.Zenith
 {
-    public class ZenithVideo : IPortDevice, IRamBank, IDisposable
+    public class ZenithVideo : IPortDevice, IRamBank
     {
         private static int PORT_IO         = 0xD8;
         private static int PORT_CONTROL_A  = 0xD9;
@@ -27,6 +27,9 @@ namespace z100emu.Peripheral.Zenith
         private static int REG_CUR_ST_HI    = 0xE;
         private static int REG_CUR_ST_LO    = 0xF;
 
+        private static int CTRL_A_CLRSCR = (1 << 3);
+        private static int CTRL_B_SET    = (1 << 3);
+
         private static int RED_START   = 0xD0000;
         private static int BLUE_START  = 0xC0000;
         private static int GREEN_START = 0xE0000;
@@ -42,6 +45,9 @@ namespace z100emu.Peripheral.Zenith
         private static double CLK_US = 16666.666666667;
 
         private byte _io;
+        private byte _controlA;
+        private byte _controlB;
+        private byte _addrLatch;
 
         private bool _redEnabled = true;
         private bool _greenEnabled = true;
@@ -54,8 +60,6 @@ namespace z100emu.Peripheral.Zenith
 
         private bool _vramEnabled = true;
 
-        private readonly IntPtr _window;
-        private readonly IntPtr _renderer;
         private IntPtr _texture;
 
         private Intel8259 _pic;
@@ -70,42 +74,19 @@ namespace z100emu.Peripheral.Zenith
         private readonly byte[] _regs = new byte[18];
         private byte _regPointer = 0;
 
-        public ZenithVideo(IntPtr window, IntPtr renderer, Intel8259 pic)
+        public ZenithVideo(Intel8259 pic)
         {
-            this._window = window;
-            this._renderer = renderer;
             this._pic = pic;
 
             this._pic.RegisterInterrupt(6, () => _interrupt);
 
             _us = 0;
-            ChangeResolution();
         }
 
-        #region SDL
-        private void ChangeResolution()
+        public byte[] Render()
         {
-            if (_texture != IntPtr.Zero)    
-                SDL.SDL_DestroyTexture(_texture);
+            byte[] pixels = new byte[REAL_WIDTH * REAL_HEIGHT * 3];
 
-            SDL.SDL_SetWindowSize(_window, REAL_WIDTH * 2, REAL_HEIGHT * 4);
-            SDL.SDL_SetWindowPosition(_window, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
-
-            _texture = SDL.SDL_CreateTexture(_renderer, SDL.SDL_PIXELFORMAT_RGBX8888,
-                SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, REAL_WIDTH, REAL_HEIGHT);
-
-            if (_texture == IntPtr.Zero)
-                throw new InvalidOperationException();
-        }
-
-        public unsafe void Draw()
-        {
-            int pitch;
-            IntPtr pixels;
-            if (SDL.SDL_LockTexture(_texture, IntPtr.Zero, out pixels, out pitch) != 0)
-                throw new InvalidOperationException();
-
-            uint* pixelPtr = (uint*) pixels.ToPointer();
             var realY = 0;
 
             var skip = false;
@@ -136,33 +117,27 @@ namespace z100emu.Peripheral.Zenith
                         var r = ((((_red[i] >> bit) & 1) != 0) && _redEnabled) || _flashEnabled ? 0xFF : 0;
                         var g = ((((_green[i] >> bit) & 1) != 0) && _greenEnabled) || _flashEnabled ? 0xFF : 0;
                         var b = ((((_blue[i] >> bit) & 1) != 0) && _blueEnabled) || _flashEnabled ? 0xFF : 0;
-                        uint pix = (uint) ((r << 24) + (g << 16) + (b << 8));
-                        pixelPtr[(realY*REAL_WIDTH) + ((x*8) + (7 - bit))] = pix;
+                        pixels[((realY*REAL_WIDTH) + ((x*8) + (7 - bit))) * 3] = (byte)r;
+                        pixels[((realY*REAL_WIDTH) + ((x*8) + (7 - bit))) * 3 + 1] = (byte)g;
+                        pixels[((realY*REAL_WIDTH) + ((x*8) + (7 - bit))) * 3 + 2] = (byte)b;
                     }
                 }
                 realY++;
             }
-
-            SDL.SDL_UnlockTexture(_texture);
-            if (SDL.SDL_RenderClear(_renderer) != 0)
-                throw new InvalidOperationException();
-            if (SDL.SDL_RenderCopy(_renderer, _texture, IntPtr.Zero, IntPtr.Zero) != 0)
-                throw new InvalidOperationException();
-
-            SDL.SDL_RenderPresent(_renderer);
+            return pixels;
         }
-        #endregion
 
-        public void Step(double us)
+        public byte[] Step(double us)
         {
             _us += us;
             _interrupt = false;
             if (_us >= CLK_US)
             {
-                Draw();
                 _interrupt = true;
                 _us -= CLK_US;
+                return Render();
             }
+            return null;
         }
 
         #region Ports
@@ -180,8 +155,22 @@ namespace z100emu.Peripheral.Zenith
             {
                 return _regs[_regPointer];
             }
+            else if (port == PORT_CONTROL_A)
+            {
+                return _controlA;
+            }
+            else if (port == PORT_CONTROL_B)
+            {
+                return _controlB;
+            }
+            else if (port == PORT_ADDR_LATCH)
+            {
+                return _addrLatch;
+            }
             else
+            {
                 throw new NotImplementedException();
+            }
         }
 
         public ushort Read16(int port)
@@ -206,9 +195,10 @@ namespace z100emu.Peripheral.Zenith
             }
             else if (port == PORT_ADDR_REG)
             {
-                if (value >= _regs.Length)
-                    throw new InvalidOperationException($"Tried to set 6845 Address register to invalid value [{value}]");
-                _regPointer = value;
+                //if (value >= _regs.Length)
+                    //throw new InvalidOperationException($"Tried to set 6845 Address register to invalid value [{value}]");
+                if (value < _regs.Length)
+                    _regPointer = value;
             }
             else if (port == PORT_REG)
             {
@@ -245,14 +235,19 @@ namespace z100emu.Peripheral.Zenith
             }
             else if (port == PORT_CONTROL_A)
             {
+                _controlA = value;
+                if ((_controlA & CTRL_A_CLRSCR) == 0)
+                {
+                    Clear((byte)(((_controlB & CTRL_B_SET) == 0) ? 0 : 0xFF));
+                }
             }
             else if (port == PORT_CONTROL_B)
             {
-                
+                _controlB = value;
             }
             else if (port == PORT_ADDR_LATCH)
             {
-                
+                _addrLatch = value;
             }
         }
 
@@ -334,13 +329,17 @@ namespace z100emu.Peripheral.Zenith
         private void CopyGreen(int offset, byte value, bool force = false) { if (_greenCopy || force) SetBits(_green, offset, value); }
         private void CopyBlue(int offset, byte value, bool force = false) { if (_blueCopy || force) SetBits(_blue, offset, value); }
 
+        private void Clear(byte value)
+        {
+            for (var i = 0; i < _red.Length; i++)
+            {
+                _red[i] = value;
+                _green[i] = value;
+                _blue[i] = value;
+            }
+        }
+
         public int Length => VRAM_BANK_SIZE*3;
         #endregion
-
-        public void Dispose()
-        {
-            if (_texture != IntPtr.Zero)
-                SDL.SDL_DestroyTexture(_texture);
-        }
     }
 }

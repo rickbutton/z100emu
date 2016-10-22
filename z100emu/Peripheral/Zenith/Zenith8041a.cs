@@ -8,7 +8,7 @@ using z100emu.Core;
 
 namespace z100emu.Peripheral.Zenith
 {
-    public class Zenith8041a : IPortDevice
+    public class Zenith8041a : IPortDevice, IKeyBuffer
     {
         private static int PORT_DAT = 0xF4;
         private static int PORT_CMD = 0xF5;

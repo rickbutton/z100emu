@@ -27,7 +27,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
-using SDL2;
 using z100emu.Core;
 using z100emu.CPU;
 using z100emu.Peripheral;
@@ -45,105 +44,82 @@ namespace z100emu.GUI
             Console.BufferHeight = 32766;
             Console.WriteLine("z100emu");
 
-            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) != 0)
-                throw new InvalidOperationException();
-            var window = SDL.SDL_CreateWindow("zenemu", SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED, 64, 64, SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN);
-            if (window == IntPtr.Zero)
-                throw new InvalidOperationException();
-            var renderer = SDL.SDL_CreateRenderer(window, -1, 0);
-            if (renderer == IntPtr.Zero)
-                throw new InvalidOperationException();
-
             var rom = ZenithRom.GetRom("v1-2.bin");
 
             var slave8259 = new Intel8259();
             var master8259 = new Intel8259(slave8259);
 
-            using (var video = new ZenithVideo(window, renderer, master8259))
+            var video = new ZenithVideo(master8259);
+            var ram = new ZenithRam(1024 * 1024, master8259);
+            ram.MapBank(rom);
+
+            var disk = new ImdFloppy(File.ReadAllBytes("msd2131.imd"));
+            Console.WriteLine("IMD Version: " + disk.ImdVersion);
+            Console.WriteLine("IMD Date:    " + disk.ImdDate);
+            Console.WriteLine("IMD Comment: " + disk.ImdComment);
+
+            ICpu cpu = new Cpu8086(ram, master8259);
+
+            var timer = new Intel8253(master8259);
+            cpu.AttachPortDevice(timer);
+
+            cpu.AttachPortDevice(master8259);
+            cpu.AttachPortDevice(slave8259);
+
+            cpu.AttachPortDevice(new ZenithMemControl(ram, rom));
+            cpu.AttachPortDevice(new ZenithReserved());
+
+            var kb = new Zenith8041a(master8259);
+
+            cpu.AttachPortDevice(kb);
+            cpu.AttachPortDevice(new ZenithParallel());
+            cpu.AttachPortDevice(new ZenithSerial(0xE8));
+            cpu.AttachPortDevice(new ZenithSerial(0xEC));
+            cpu.AttachPortDevice(new ZenithExpansion());
+
+            cpu.AttachPortDevice(new ZenithDIP());
+
+            cpu.AttachPortDevice(new ZenithWinchester());
+
+            var masterStatus = new StatusPort(slave8259, 0xB5);
+            var masterFloppy = new WD1797(masterStatus, 0xB0, disk);
+            var masterCl = new ControlLatch(0xB4);
+            var slaveStatus = new StatusPort(slave8259, 0xBD);
+            var slaveFloppy = new WD1797(slaveStatus, 0xB8, disk);
+            var slaveCl = new ControlLatch(0xBC);
+
+            cpu.AttachPortDevice(masterFloppy);
+            cpu.AttachPortDevice(masterCl);
+            cpu.AttachPortDevice(masterStatus);
+            cpu.AttachPortDevice(slaveFloppy);
+            cpu.AttachPortDevice(slaveCl);
+            cpu.AttachPortDevice(slaveStatus);
+
+            ram.MapBank(video);
+            cpu.AttachPortDevice(video);
+
+
+            var debug = false;
+
+            double cpuHertz = 4.77 * 1000000;
+
+            Stopwatch sw = new Stopwatch();
+
+            var quit = false;
+            while (!quit)
             {
-                var ram = new ZenithRam(1024 * 1024, master8259);
-                ram.MapBank(rom);
-
-                var disk = new ImdFloppy(File.ReadAllBytes("msd2131.imd"));
-                Console.WriteLine("IMD Version: " + disk.ImdVersion);
-                Console.WriteLine("IMD Date:    " + disk.ImdDate);
-                Console.WriteLine("IMD Comment: " + disk.ImdComment);
-
-                ICpu cpu = new Cpu8086(ram, master8259);
-
-                var timer = new Intel8253(master8259);
-                cpu.AttachPortDevice(timer);
-
-                cpu.AttachPortDevice(master8259);
-                cpu.AttachPortDevice(slave8259);
-
-                cpu.AttachPortDevice(new ZenithMemControl(ram, rom));
-                cpu.AttachPortDevice(new ZenithReserved());
-
-                var kb = new Zenith8041a(master8259);
-
-                cpu.AttachPortDevice(kb);
-                cpu.AttachPortDevice(new ZenithParallel());
-                cpu.AttachPortDevice(new ZenithSerial(0xE8));
-                cpu.AttachPortDevice(new ZenithSerial(0xEC));
-                cpu.AttachPortDevice(new ZenithExpansion());
-
-                cpu.AttachPortDevice(new ZenithDIP());
-
-                cpu.AttachPortDevice(new ZenithWinchester());
-
-                var masterStatus = new StatusPort(slave8259, 0xB5);
-                var masterFloppy = new WD1797(masterStatus, 0xB0, disk);
-                var masterCl = new ControlLatch(0xB4);
-                var slaveStatus = new StatusPort(slave8259, 0xBD);
-                var slaveFloppy = new WD1797(slaveStatus, 0xB8, disk);
-                var slaveCl = new ControlLatch(0xBC);
-
-                cpu.AttachPortDevice(masterFloppy);
-                cpu.AttachPortDevice(masterCl);
-                cpu.AttachPortDevice(masterStatus);
-                cpu.AttachPortDevice(slaveFloppy);
-                cpu.AttachPortDevice(slaveCl);
-                cpu.AttachPortDevice(slaveStatus);
-
-                ram.MapBank(video);
-                cpu.AttachPortDevice(video);
-
-
-                var debug = false;
-
-                double cpuHertz = 4.77*1000000;
-
-                var quit = false;
-                while (!quit)
-                {
-                    SDL.SDL_Event evt;
-                    while (SDL.SDL_PollEvent(out evt) != 0)
-                    {
-                        if (evt.type == SDL.SDL_EventType.SDL_QUIT)
-                            quit = true;
-                        else if (evt.type == SDL.SDL_EventType.SDL_KEYDOWN)
-                        {
-                            kb.Input((byte)evt.key.keysym.sym);
-                        }
-                    }
-
-
-
-                    double clocks = cpu.ProcessSingleInstruction(debug);
-                    double us = (clocks / cpuHertz) * 1000000;
-                    timer.Step(us);
-                    video.Step(us);
-                    master8259.Step();
-                    slave8259.Step();
-                    masterFloppy.Step(us);
-                    slaveFloppy.Step(us);
-                }
+                sw.Restart();
+                double clocks = cpu.ProcessSingleInstruction(debug);
+                sw.Stop();
+                double realUs = sw.ElapsedTicks * TimeSpan.TicksPerMillisecond * 1000;
+                double us = (clocks / cpuHertz) * 1000000;
+                timer.Step(us);
+                video.Step(us);
+                master8259.Step();
+                slave8259.Step();
+                masterFloppy.Step(us);
+                slaveFloppy.Step(us);
             }
-
-            SDL.SDL_DestroyRenderer(renderer);
-            SDL.SDL_DestroyWindow(window);
-            SDL.SDL_Quit();
         }
     }
 }

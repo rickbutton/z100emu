@@ -29,7 +29,7 @@ namespace z100emu.CPU
     internal static class EnumExtensions
     {
         [Pure]
-        public static bool Has(this Cpu8086.FlagsRegister flag, Cpu8086.FlagsRegister testFlag) =>
+        public static bool Has(this FlagsRegister flag, FlagsRegister testFlag) =>
             (flag & testFlag) != 0;
         [Pure]
         public static bool Has(this OpCodeManager.OpCodeFlag flag, OpCodeManager.OpCodeFlag testFlag) =>

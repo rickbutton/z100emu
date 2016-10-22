@@ -11,6 +11,7 @@ namespace z100emu.Peripheral.Floppy.Commands
         private bool _verify;
 
         private byte _dest;
+        private byte _pos;
         private byte _start;
 
         private double _us;
@@ -39,6 +40,7 @@ namespace z100emu.Peripheral.Floppy.Commands
 
             _dest = _w.Data;
             _start = _w.TrackRegister;
+            _pos = _w.TrackRegister;
         }
 
         public bool Step(double us)
@@ -47,19 +49,19 @@ namespace z100emu.Peripheral.Floppy.Commands
 
             if (_us >= SEEK_TIME)
             {
-                //Console.WriteLine($"Seek from {_start} to {_dest}, real track:{_w.Track}");
-                if (_dest > _start)
+                Console.WriteLine($"Seek from {_pos} to {_dest}, real track:{_w.Track}");
+                if (_dest > _pos)
                 {
-                    _start++;
+                    _pos++;
                     _w.Track++;
                 }
-                else if (_dest < _start)
+                else if (_dest < _pos)
                 {
-                    _start--;
+                    _pos--;
                     _w.Track--;
                 }
-                //_w.Track = _start;
-                _w.TrackRegister = _start;
+                //_w.Track = _pos;
+                _w.TrackRegister = _pos;
                 _us -= SEEK_TIME;
             }
 

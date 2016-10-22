@@ -28,6 +28,6 @@ namespace z100emu.Peripheral.Zenith
             }
         } 
         public void Write16(int port, ushort value) { }
-        public int[] Ports => new int[] { 0xF6, 0xA8, 0xA9, 0xAA, 0xAB, 0x40 };
+        public int[] Ports => new int[] { 0xF6, 0xA8, 0xA9, 0xAA, 0xAB, 0x40, 0x0, 0x14, 0xCE };
     }
 }

@@ -79,7 +79,16 @@ namespace z100emu.Peripheral
             {
                 if (ReadLoad == CounterReadLoad.Latch)
                 {
-                    return (byte) LatchedValue;
+                    if (!_rlType)
+                    {
+                        _rlType = !_rlType;
+                        return (byte) LatchedValue;
+                    }
+                    else
+                    {
+                        _rlType = !_rlType;
+                        return (byte) (LatchedValue >> 8);
+                    }
                 }
                 else if (ReadLoad == CounterReadLoad.LeastSig)
                 {
@@ -114,10 +123,12 @@ namespace z100emu.Peripheral
                 else if (ReadLoad == CounterReadLoad.LeastSig)
                 {
                     Value = (ushort) ((Value & 0xFF00) + value);
+                    Active = true;
                 }
                 else if (ReadLoad == CounterReadLoad.MostSig)
                 {
                     Value = (ushort) ((value << 8) + ((byte) (Value)));
+                    Active = true;
                 }
                 else if (ReadLoad == CounterReadLoad.LeastMostSig)
                 {
@@ -277,11 +288,12 @@ namespace z100emu.Peripheral
                 counter.Mode = (CounterMode) mode;
                 counter.BCD = bcd;
 
-                if (counter.Mode == CounterMode.Mode0)
+                if (counter.Mode == CounterMode.Mode0 && counter.ReadLoad != CounterReadLoad.Latch)
                 {
                     counter.Value = counter.LastWrittenValue;
                 }
-                counter.Active = false;
+                if (counterNum != 1)
+                    counter.Active = false;
 
                 if (bcd)
                     throw new NotImplementedException();
@@ -296,7 +308,11 @@ namespace z100emu.Peripheral
             }
             else if (port == PORT_COUNT1)
             {
-                CountOne.Write(data);
+                //this is a hack
+                CountOne.Value = 250;
+                CountOne.LastWrittenValue = 250;
+                CountOne.Active = true;
+                //CountOne.Write(data);
             }
             else if (port == PORT_COUNT2)
             {

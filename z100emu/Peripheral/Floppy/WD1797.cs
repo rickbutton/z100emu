@@ -156,6 +156,7 @@ namespace z100emu.Peripheral.Floppy
                 _cmd = value;
                 if (!_commandDone)
                     throw new InvalidOperationException("ERROR: sent command while command still running");
+                StatusPort.Interrupt = false;
                 ExecuteCommand();
                 return;
             }
@@ -202,7 +203,7 @@ namespace z100emu.Peripheral.Floppy
                 _commandDone = _command.Step(us);
             }
 
-            if (_command.Type == CommandType.Type1)
+            if (_command.Type == CommandType.Type1 || _command.Type == CommandType.Type4)
                 UpdateStatusOne();
             else if (_command.Type == CommandType.Type2 || _command.Type == CommandType.Type3)
                 UpdateStatusTwo();
@@ -292,12 +293,11 @@ namespace z100emu.Peripheral.Floppy
             }
             else if ((_cmd >> 4) == 13)
             {
-                Console.WriteLine("Force Interrupt");
-                _commandDone = true;
                 InterruptNRR = (_cmd & CMD_FORCE_INT_NR_R) == CMD_FORCE_INT_NR_R;
                 InterruptRNR = (_cmd & CMD_FORCE_INT_R_NR) == CMD_FORCE_INT_R_NR;
                 InterruptIndexPulse = (_cmd & CMD_FORCE_INT_PULSE) == CMD_FORCE_INT_PULSE;
                 InterruptImmediate = (_cmd & CMD_FORCE_INT_IMM) == CMD_FORCE_INT_IMM;
+                _command = new InterruptCommand(this);
 
                 if (InterruptImmediate)
                     StatusPort.Interrupt = true;

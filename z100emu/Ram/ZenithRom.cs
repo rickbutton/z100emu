@@ -27,7 +27,7 @@ namespace z100emu.Ram
             }
             else if (RomConfig == RomConfig.Option2)
             {
-                if (pos >= (1024*1024) - _rom.Length)
+                if (pos >= (1024*1024) - _rom.Length && pos < (1024*1024))
                 {
                     var index = pos - ((1024*1024) - _rom.Length);
 

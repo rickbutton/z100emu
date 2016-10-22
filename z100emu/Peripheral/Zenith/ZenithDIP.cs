@@ -4,7 +4,7 @@ namespace z100emu.Peripheral.Zenith
 {
     public class ZenithDIP : IPortDevice
     {
-        private byte _dip = 0x8;
+        private byte _dip = 0;
 
         public byte Read(int port)
         {

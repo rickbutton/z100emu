@@ -21,7 +21,7 @@ namespace z100emu.Peripheral.Floppy
 
         public bool Interrupt = false;
         public bool MotorOn = false;
-        public bool TPI96 = true;
+        public bool TPI96 = false;
         public bool TwoSided = true;
         public bool Ready = false;
 
@@ -46,7 +46,9 @@ namespace z100emu.Peripheral.Floppy
 
         public byte Read(int port)
         {
-            return Value;
+            var v = Value;
+            Interrupt = false;
+            return v;
         }
 
         public ushort Read16(int port)

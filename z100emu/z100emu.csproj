@@ -45,16 +45,103 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\ICpu.cs" />
     <Compile Include="Core\IPortDevice.cs" />
+    <Compile Include="CPU\Breakpoint.cs" />
     <Compile Include="CPU\Clock.cs" />
+    <Compile Include="CPU\FlagsRegister.cs" />
+    <Compile Include="CPU\InstructionHelper.cs" />
+    <Compile Include="CPU\InstructionStringHelper.cs" />
+    <Compile Include="CPU\Instructions\Aaa.cs" />
+    <Compile Include="CPU\Instructions\Aad.cs" />
+    <Compile Include="CPU\Instructions\Aam.cs" />
+    <Compile Include="CPU\Instructions\Aas.cs" />
+    <Compile Include="CPU\Instructions\CallFar.cs" />
+    <Compile Include="CPU\Instructions\CallNear.cs" />
+    <Compile Include="CPU\Instructions\CallNearRelative.cs" />
+    <Compile Include="CPU\Instructions\Clc.cs" />
+    <Compile Include="CPU\Instructions\Cld.cs" />
+    <Compile Include="CPU\Instructions\Cli.cs" />
+    <Compile Include="CPU\Instructions\Cmc.cs" />
+    <Compile Include="CPU\Instructions\CompareString.cs" />
+    <Compile Include="CPU\Instructions\Daa.cs" />
+    <Compile Include="CPU\Instructions\Das.cs" />
+    <Compile Include="CPU\Instructions\Dispatch16.cs" />
+    <Compile Include="CPU\Instructions\Divide.cs" />
+    <Compile Include="CPU\Instructions\Divide16.cs" />
+    <Compile Include="CPU\Instructions\Divide8.cs" />
+    <Compile Include="CPU\Instructions\Escape.cs" />
+    <Compile Include="CPU\Instructions\Halt.cs" />
+    <Compile Include="CPU\Instructions\In.cs" />
+    <Compile Include="CPU\Instructions\Interrupt.cs" />
+    <Compile Include="CPU\Instructions\Into.cs" />
+    <Compile Include="CPU\Instructions\JA.cs" />
+    <Compile Include="CPU\Instructions\JBE.cs" />
+    <Compile Include="CPU\Instructions\Jcxz.cs" />
+    <Compile Include="CPU\Instructions\JG.cs" />
+    <Compile Include="CPU\Instructions\JGE.cs" />
+    <Compile Include="CPU\Instructions\JL.cs" />
+    <Compile Include="CPU\Instructions\JLE.cs" />
+    <Compile Include="CPU\Instructions\JNS.cs" />
+    <Compile Include="CPU\Instructions\JPE.cs" />
+    <Compile Include="CPU\Instructions\JPO.cs" />
+    <Compile Include="CPU\Instructions\JS.cs" />
+    <Compile Include="CPU\Instructions\Jump.cs" />
+    <Compile Include="CPU\Instructions\JumpIfCarry.cs" />
+    <Compile Include="CPU\Instructions\JumpIfNotCarry.cs" />
+    <Compile Include="CPU\Instructions\JumpIfNotOverflow.cs" />
+    <Compile Include="CPU\Instructions\JumpIfNotZero.cs" />
+    <Compile Include="CPU\Instructions\JumpIfOverflow.cs" />
+    <Compile Include="CPU\Instructions\JumpIfZero.cs" />
+    <Compile Include="CPU\Instructions\JumpRelative.cs" />
+    <Compile Include="CPU\Instructions\Lahf.cs" />
+    <Compile Include="CPU\Instructions\LoadFarPointer.cs" />
+    <Compile Include="CPU\Instructions\LoadString.cs" />
+    <Compile Include="CPU\Instructions\Loop.cs" />
+    <Compile Include="CPU\Instructions\LoopNotZero.cs" />
+    <Compile Include="CPU\Instructions\LoopZero.cs" />
+    <Compile Include="CPU\Instructions\MoveString.cs" />
+    <Compile Include="CPU\Instructions\Multiply.cs" />
+    <Compile Include="CPU\Instructions\OneStringOperation.cs" />
+    <Compile Include="CPU\Instructions\Out.cs" />
+    <Compile Include="CPU\Instructions\Pop.cs" />
+    <Compile Include="CPU\Instructions\Push.cs" />
+    <Compile Include="CPU\Instructions\ReturnFar.cs" />
+    <Compile Include="CPU\Instructions\ReturnInterrupt.cs" />
+    <Compile Include="CPU\Instructions\ReturnNear.cs" />
+    <Compile Include="CPU\Instructions\Sahf.cs" />
+    <Compile Include="CPU\Instructions\ScanString.cs" />
+    <Compile Include="CPU\Instructions\SignedDivide.cs" />
+    <Compile Include="CPU\Instructions\SignedDivide16.cs" />
+    <Compile Include="CPU\Instructions\SignedDivide8.cs" />
+    <Compile Include="CPU\Instructions\Stc.cs" />
+    <Compile Include="CPU\Instructions\Std.cs" />
+    <Compile Include="CPU\Instructions\Sti.cs" />
+    <Compile Include="CPU\Instructions\StoreString.cs" />
+    <Compile Include="CPU\Instructions\StringOperation.cs" />
+    <Compile Include="CPU\Instructions\Wait.cs" />
+    <Compile Include="CPU\Instructions\Invalid.cs" />
+    <Compile Include="CPU\Instructions\Arithmetic.cs" />
+    <Compile Include="CPU\Instructions\Cwd.cs" />
+    <Compile Include="CPU\Instructions\Cbw.cs" />
+    <Compile Include="CPU\Instructions\Exchange.cs" />
+    <Compile Include="CPU\Instructions\FarJump.cs" />
+    <Compile Include="CPU\Instructions\Lea.cs" />
+    <Compile Include="CPU\Instructions\UnaryArithmetic.cs" />
+    <Compile Include="CPU\Instructions\Xlat.cs" />
+    <Compile Include="CPU\Register.cs" />
     <Compile Include="CPU\EnumExtensions.cs" />
+    <Compile Include="CPU\Fetcher8086.cs" />
+    <Compile Include="CPU\IInstruction.cs" />
     <Compile Include="CPU\IInstructionFetcher.cs" />
+    <Compile Include="CPU\Instructions\Move.cs" />
     <Compile Include="CPU\OpCodeManager.cs" />
     <Compile Include="CPU\Cpu8086.cs" />
-    <Compile Include="Core\ICpu.cs" />
+    <Compile Include="IKeyBuffer.cs" />
     <Compile Include="Peripheral\Display\SDL.cs" />
     <Compile Include="Peripheral\Floppy\Commands\ReadSectorCommand.cs" />
     <Compile Include="Peripheral\Floppy\Commands\ReadAddrCommand.cs" />
+    <Compile Include="Peripheral\Floppy\Commands\InterruptCommand.cs" />
     <Compile Include="Peripheral\Floppy\Commands\StepCommand.cs" />
     <Compile Include="Peripheral\Floppy\Commands\SeekCommand.cs" />
     <Compile Include="Peripheral\Floppy\CommandType.cs" />
@@ -87,6 +174,8 @@
     <Compile Include="Peripheral\Zenith\ZenithDIP.cs" />
     <Compile Include="Peripheral\Zenith\ZenithWinchester.cs" />
     <Compile Include="Peripheral\Zenith\ZenithReserved.cs" />
+    <Compile Include="SystemStatus.cs" />
+    <Compile Include="ZenithSystem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Ram\IRamBank.cs" />
     <Compile Include="Ram\IRam.cs" />
@@ -102,6 +191,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\z100emu.CPU\z100emu.CPU.csproj">
+      <Project>{f6b73606-e15d-4726-b03d-4a7a81e0be95}</Project>
+      <Name>z100emu.CPU</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

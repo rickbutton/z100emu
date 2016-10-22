@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		WebEssentials2015-Settings.json = WebEssentials2015-Settings.json
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "z100emu.Interface", "z100emu.Interface\z100emu.Interface.csproj", "{23A31AFA-55C0-4CF4-9EE7-9A6BDEA36D7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "z100emu.CPU", "z100emu.CPU\z100emu.CPU.csproj", "{F6B73606-E15D-4726-B03D-4A7A81E0BE95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4D3A092-A450-4A90-B15E-B87988FBC376}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23A31AFA-55C0-4CF4-9EE7-9A6BDEA36D7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23A31AFA-55C0-4CF4-9EE7-9A6BDEA36D7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23A31AFA-55C0-4CF4-9EE7-9A6BDEA36D7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23A31AFA-55C0-4CF4-9EE7-9A6BDEA36D7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6B73606-E15D-4726-B03D-4A7A81E0BE95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6B73606-E15D-4726-B03D-4A7A81E0BE95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6B73606-E15D-4726-B03D-4A7A81E0BE95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6B73606-E15D-4726-B03D-4A7A81E0BE95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

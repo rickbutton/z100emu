@@ -42,9 +42,9 @@ namespace z100emu.Peripheral.Floppy.Commands
 
             /*if (_delay)
             {
-                if (_us >= DELAY_MILLISECS*1000)
+                if (_us >= DELAY_MILLISECS)
                 {
-                    _us -= DELAY_MILLISECS*1000;
+                    _us -= DELAY_MILLISECS;
                     _delay = false;
                 }
                 else

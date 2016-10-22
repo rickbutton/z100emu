@@ -28,7 +28,7 @@ using JetBrains.Annotations;
 
 namespace z100emu.CPU
 {
-    internal static class OpCodeManager
+    public static class OpCodeManager
     {
         public enum InstructionType
         {
@@ -125,7 +125,7 @@ namespace z100emu.CPU
             SignedMultiply,
             Divide,
             SignedDivide,
-            EmulatorSpecial
+            Escape,
         }
 
         [Flags]
@@ -407,7 +407,7 @@ namespace z100emu.CPU
             /*0x0C*/ new OpCode(InstructionType.Or,			        OpCodeFlag.Size8,                       ARG_AL,     ARG_IB,      4,    0,    false),
             /*0x0D*/ new OpCode(InstructionType.Or,			        OpCodeFlag.None,                        ARG_AX,     ARG_IW,      4,    0,    false),
             /*0x0E*/ new OpCode(InstructionType.Push,			    OpCodeFlag.None,                        ARG_CS,     ARG_NONE,    6,    1,    false),
-            /*0x0F*/ new OpCode(InstructionType.EmulatorSpecial,	OpCodeFlag.None,                        ARG_IB,     ARG_NONE,    0,    0,    false),
+            /*0x0F*/ new OpCode(InstructionType.Invalid,            OpCodeFlag.None,                        ARG_NONE,     ARG_NONE,    0,    0,    false),
             /*0x10*/ new OpCode(InstructionType.Adc,			    OpCodeFlag.Size8 | OpCodeFlag.HasRM,    ARG_EB,     ARG_GB,      ArithmeticClockDef),
             /*0x11*/ new OpCode(InstructionType.Adc,			    OpCodeFlag.HasRM,                       ARG_EW,     ARG_GW,      ArithmeticClockDef),
             /*0x12*/ new OpCode(InstructionType.Adc,			    OpCodeFlag.Size8 | OpCodeFlag.HasRM,    ARG_GB,     ARG_EB,      ArithmeticClockDef),
@@ -584,8 +584,8 @@ namespace z100emu.CPU
             /*0xBD*/ new OpCode(InstructionType.Move,			    OpCodeFlag.None,					    ARG_BP,     ARG_IW,      4,    0,    false),
             /*0xBE*/ new OpCode(InstructionType.Move,			    OpCodeFlag.None,					    ARG_SI,     ARG_IW,      4,    0,    false),
             /*0xBF*/ new OpCode(InstructionType.Move,			    OpCodeFlag.None,					    ARG_DI,     ARG_IW,      4,    0,    false),
-            /*0xC0*/ new OpCode(InstructionType.Group,			    OpCodeFlag.Size8 | OpCodeFlag.HasRM,	ARG_EB,     ARG_IB,      GroupClockDef),
-            /*0xC1*/ new OpCode(InstructionType.Group,			    OpCodeFlag.HasRM,					    ARG_EW,     ARG_IB,      GroupClockDef),
+            /*0xC0*/ new OpCode(InstructionType.Invalid,		    OpCodeFlag.Size8 | OpCodeFlag.HasRM,	ARG_EB,     ARG_IB,      GroupClockDef),
+            /*0xC1*/ new OpCode(InstructionType.Invalid,		    OpCodeFlag.HasRM,					    ARG_EW,     ARG_IB,      GroupClockDef),
             /*0xC2*/ new OpCode(InstructionType.ReturnNear,			OpCodeFlag.None,					    ARG_IW,     ARG_NONE,    16,   1,    false),
             /*0xC3*/ new OpCode(InstructionType.ReturnNear,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    12,   1,    false),
             /*0xC4*/ new OpCode(InstructionType.Les,			    OpCodeFlag.HasRM,					    ARG_GW,     ARG_M,       8,    2,    true),
@@ -608,14 +608,14 @@ namespace z100emu.CPU
             /*0xD5*/ new OpCode(InstructionType.Aad,			    OpCodeFlag.Size8,					    ARG_IB,     ARG_NONE,    60,    0,    false),
             /*0xD6*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,     0,    false),
             /*0xD7*/ new OpCode(InstructionType.Xlat,			    OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    11,    0,    false),
-            /*0xD8*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xD9*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDA*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDB*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDC*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDD*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.Size8,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDE*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
-            /*0xDF*/ new OpCode(InstructionType.Invalid,			OpCodeFlag.None,					    ARG_NONE,   ARG_NONE,    0,    0,    false),
+            /*0xD8*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.Size8 | OpCodeFlag.HasRM,	ARG_EB,     ARG_NONE,    0,    0,    false),
+            /*0xD9*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.None | OpCodeFlag.HasRM,	    ARG_EW,     ARG_NONE,    0,    0,    false),
+            /*0xDA*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.Size8 | OpCodeFlag.HasRM,    ARG_EB,     ARG_NONE,    0,    0,    false),
+            /*0xDB*/ new OpCode(InstructionType.Escape,	     		OpCodeFlag.None | OpCodeFlag.HasRM,	    ARG_EW,     ARG_NONE,    0,    0,    false),
+            /*0xDC*/ new OpCode(InstructionType.Escape,		    	OpCodeFlag.Size8 | OpCodeFlag.HasRM,    ARG_EB,     ARG_NONE,    0,    0,    false),
+            /*0xDD*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.None | OpCodeFlag.HasRM,     ARG_EW,     ARG_NONE,    0,    0,    false),
+            /*0xDE*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.Size8 | OpCodeFlag.HasRM,    ARG_EB,     ARG_NONE,    0,    0,    false),
+            /*0xDF*/ new OpCode(InstructionType.Escape, 			OpCodeFlag.None | OpCodeFlag.HasRM,	    ARG_EW,     ARG_NONE,    0,    0,    false),
             /*0xE0*/ new OpCode(InstructionType.Loopnz,			    OpCodeFlag.Size8,					    ARG_JB,     ARG_NONE,    19,   5,    0,    false),
             /*0xE1*/ new OpCode(InstructionType.Loopz,			    OpCodeFlag.Size8,					    ARG_JB,     ARG_NONE,    18,   6,    0,    false),
             /*0xE2*/ new OpCode(InstructionType.Loop,			    OpCodeFlag.Size8,					    ARG_JB,     ARG_NONE,    17,   5,    0,    false),
@@ -687,32 +687,32 @@ namespace z100emu.CPU
 
         private const int CLK_COMPLEX = -1;
 
-        private const int ARG_AX = (int)Cpu8086.Register.AX;
-        private const int ARG_CX = (int)Cpu8086.Register.CX;
-        private const int ARG_DX = (int)Cpu8086.Register.DX;
-        private const int ARG_BX = (int)Cpu8086.Register.BX;
+        private const int ARG_AX = (int)Register.AX;
+        private const int ARG_CX = (int)Register.CX;
+        private const int ARG_DX = (int)Register.DX;
+        private const int ARG_BX = (int)Register.BX;
 
-        private const int ARG_SP = (int)Cpu8086.Register.SP;
-        private const int ARG_BP = (int)Cpu8086.Register.BP;
-        private const int ARG_SI = (int)Cpu8086.Register.SI;
-        private const int ARG_DI = (int)Cpu8086.Register.DI;
+        private const int ARG_SP = (int)Register.SP;
+        private const int ARG_BP = (int)Register.BP;
+        private const int ARG_SI = (int)Register.SI;
+        private const int ARG_DI = (int)Register.DI;
 
-        private const int ARG_ES = (int)Cpu8086.Register.ES;
-        private const int ARG_CS = (int)Cpu8086.Register.CS;
-        private const int ARG_SS = (int)Cpu8086.Register.SS;
-        private const int ARG_DS = (int)Cpu8086.Register.DS;
+        private const int ARG_ES = (int)Register.ES;
+        private const int ARG_CS = (int)Register.CS;
+        private const int ARG_SS = (int)Register.SS;
+        private const int ARG_DS = (int)Register.DS;
 
-        private const int ARG_IP = (int)Cpu8086.Register.IP;
-        private const int ARG_FLAGS = unchecked((int)Cpu8086.Register.FLAGS);
+        private const int ARG_IP = (int)Register.IP;
+        private const int ARG_FLAGS = unchecked((int)Register.FLAGS);
 
-        private const int ARG_AL = unchecked((int)Cpu8086.Register.AL);
-        private const int ARG_CL = unchecked((int)Cpu8086.Register.CL);
-        private const int ARG_DL = unchecked((int)Cpu8086.Register.DL);
-        private const int ARG_BL = unchecked((int)Cpu8086.Register.BL);
-        private const int ARG_AH = unchecked((int)Cpu8086.Register.AH);
-        private const int ARG_CH = unchecked((int)Cpu8086.Register.CH);
-        private const int ARG_DH = unchecked((int)Cpu8086.Register.DH);
-        private const int ARG_BH = unchecked((int)Cpu8086.Register.BH);
+        private const int ARG_AL = unchecked((int)Register.AL);
+        private const int ARG_CL = unchecked((int)Register.CL);
+        private const int ARG_DL = unchecked((int)Register.DL);
+        private const int ARG_BL = unchecked((int)Register.BL);
+        private const int ARG_AH = unchecked((int)Register.AH);
+        private const int ARG_CH = unchecked((int)Register.CH);
+        private const int ARG_DH = unchecked((int)Register.DH);
+        private const int ARG_BH = unchecked((int)Register.BH);
 
         private const int ARG_A = 0xFFF0;
         private const int ARG_EB = 0xFFF1;
@@ -738,7 +738,7 @@ namespace z100emu.CPU
 
         public struct Instruction
         {
-            public Cpu8086.Register SegmentPrefix;
+            public Register SegmentPrefix;
             public byte OpcodePrefix;
             public InstructionType Type;
             public OpCodeFlag Flag;
@@ -759,7 +759,7 @@ namespace z100emu.CPU
 
             var opcode = fetcher.FetchU8();
             instruction.Type = opCodes[opcode].Type;
-            instruction.SegmentPrefix = Cpu8086.Register.Invalid;
+            instruction.SegmentPrefix = Register.Invalid;
             instruction.OpcodePrefix = 0;
 
             while (instruction.Type == InstructionType.Prefix)
@@ -767,16 +767,16 @@ namespace z100emu.CPU
                 switch (opcode)
                 {
                     case 0x26:
-                        instruction.SegmentPrefix = Cpu8086.Register.ES;
+                        instruction.SegmentPrefix = Register.ES;
                         break;
                     case 0x2E:
-                        instruction.SegmentPrefix = Cpu8086.Register.CS;
+                        instruction.SegmentPrefix = Register.CS;
                         break;
                     case 0x36:
-                        instruction.SegmentPrefix = Cpu8086.Register.SS;
+                        instruction.SegmentPrefix = Register.SS;
                         break;
                     case 0x3E:
-                        instruction.SegmentPrefix = Cpu8086.Register.DS;
+                        instruction.SegmentPrefix = Register.DS;
                         break;
                     case 0xF0:
                     case 0xF2:
@@ -790,12 +790,12 @@ namespace z100emu.CPU
                 opcode = fetcher.FetchU8();
                 instruction.Type = opCodes[opcode].Type;
             }
-            if (instruction.Type == InstructionType.EmulatorSpecial)
+            if (instruction.Type == InstructionType.Invalid)
             {
-                var opcode2 = fetcher.FetchU8();
-                Debug.Assert(opcode2 == 0x0F);
+                //throw new InvalidOperationException($"Invalid OPCODE {opcode:X}");
+                Console.WriteLine($"Invalid OPCODE {opcode:X}");
+                return instruction;
             }
-            Debug.Assert(instruction.Type != InstructionType.Invalid);
 
             var argument1Type = opCodes[opcode].Argument1Type;
             var argument2Type = opCodes[opcode].Argument2Type;
@@ -808,7 +808,12 @@ namespace z100emu.CPU
             if (instruction.Type == InstructionType.Group)
             {
                 instruction.Type = ConvertFromGroup(opcode, rm);
-                Debug.Assert(instruction.Type != InstructionType.Invalid);
+                if (instruction.Type == InstructionType.Invalid)
+                {
+                    Console.WriteLine($"Invalid GROUP OPCODE {opcode:X}:{rm:X}");
+                    return instruction;
+                    //Debug.Assert(instruction.Type != InstructionType.Invalid);
+                }
                 var reg = (byte)((rm >> 3) & 7);
                 if (opcode == 0xF6 && reg == 0)
                     argument2Type = ARG_IB;
